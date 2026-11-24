@@ -287,7 +287,7 @@ sels <- lapply(fits, function(p) suppressWarnings(suppressMessages(
   mc_graph_stepwise(p$g, criterion = "gbic", trace = FALSE))))
 pts  <- lapply(fits, pair_table)
 #> Call: MECH ~ 1
-#> <environment: 0x5be96a2bc6e8>
+#> <environment: 0x55c26a0e8848>
 #> 
 #> Link function: identity 
 #> Variance function: constant 
@@ -302,7 +302,7 @@ pts  <- lapply(fits, pair_table)
 #> 1   305.768  83.70606 3.652878 0.0002593172
 #> 
 #> Call: VECT ~ 1
-#> <environment: 0x5be96a2cafe0>
+#> <environment: 0x55c26a0f7140>
 #> 
 #> Link function: identity 
 #> Variance function: constant 
@@ -317,7 +317,7 @@ pts  <- lapply(fits, pair_table)
 #> 1  172.8422  60.17941 2.872116 0.004077339
 #> 
 #> Call: ALG ~ 1
-#> <environment: 0x5be96a700d70>
+#> <environment: 0x55c26a52ced0>
 #> 
 #> Link function: identity 
 #> Variance function: constant 
@@ -332,7 +332,7 @@ pts  <- lapply(fits, pair_table)
 #> 1   112.886   60.3568 1.870311 0.06144066
 #> 
 #> Call: ANL ~ 1
-#> <environment: 0x5be96a703f38>
+#> <environment: 0x55c26a533ec8>
 #> 
 #> Link function: identity 
 #> Variance function: constant 
@@ -347,7 +347,7 @@ pts  <- lapply(fits, pair_table)
 #> 1  220.3804  77.67579 2.837182 0.004551365
 #> 
 #> Call: STAT ~ 1
-#> <environment: 0x5be96a70afd8>
+#> <environment: 0x55c26a537138>
 #> 
 #> Link function: identity 
 #> Variance function: constant 
@@ -378,7 +378,7 @@ pts  <- lapply(fits, pair_table)
 #> Correction: TRUE 
 #> Number iterations: 5 
 #> Call: Ndoc ~ sex + age + income
-#> <environment: 0x5be9645480b0>
+#> <environment: 0x55c26436ae20>
 #> 
 #> Link function: log 
 #> Variance function: poisson_tweedie 
@@ -400,7 +400,7 @@ pts  <- lapply(fits, pair_table)
 #> 1   1.58598  4.509265 0.3517158 0.7250514
 #> 
 #> Call: Nndoc ~ sex + age + income
-#> <environment: 0x5be9644c71b8>
+#> <environment: 0x55c2642f3518>
 #> 
 #> Link function: log 
 #> Variance function: poisson_tweedie 
@@ -422,7 +422,7 @@ pts  <- lapply(fits, pair_table)
 #> 1  4.201141  9.222331 0.4555401 0.6487207
 #> 
 #> Call: Nadm ~ sex + age + income
-#> <environment: 0x5be963e3d598>
+#> <environment: 0x55c263c69770>
 #> 
 #> Link function: log 
 #> Variance function: poisson_tweedie 
@@ -444,7 +444,7 @@ pts  <- lapply(fits, pair_table)
 #> 1 0.8473357  13.81626 0.06132889 0.9510973
 #> 
 #> Call: Nhosp ~ sex + age + income
-#> <environment: 0x5be963e330b0>
+#> <environment: 0x55c263c5f288>
 #> 
 #> Link function: log 
 #> Variance function: poisson_tweedie 
@@ -466,7 +466,7 @@ pts  <- lapply(fits, pair_table)
 #> 1   21.3059  5.230797 4.073166 4.637836e-05
 #> 
 #> Call: Nmed ~ sex + age + income
-#> <environment: 0x5be963e28cf8>
+#> <environment: 0x55c263c54f08>
 #> 
 #> Link function: log 
 #> Variance function: poisson_tweedie 
@@ -504,7 +504,7 @@ pts  <- lapply(fits, pair_table)
 #> Correction: TRUE 
 #> Number iterations: 10 
 #> Call: CA ~ COORD.X * COORD.Y + SAND + SILT + CLAY + PHWATER
-#> <environment: 0x5be95fd436c8>
+#> <environment: 0x55c25fb6fa80>
 #> 
 #> Link function: log 
 #> Variance function: tweedie 
@@ -526,7 +526,7 @@ pts  <- lapply(fits, pair_table)
 #> 1  110.2486  9.799902 11.24997 2.316833e-29
 #> 
 #> Call: MG ~ COORD.X * COORD.Y + SAND + SILT + CLAY + PHWATER
-#> <environment: 0x5be95fd0be18>
+#> <environment: 0x55c25fb37f68>
 #> 
 #> Link function: log 
 #> Variance function: tweedie 
@@ -548,7 +548,7 @@ pts  <- lapply(fits, pair_table)
 #> 1  203.0116  19.08757 10.6358 2.030805e-26
 #> 
 #> Call: K ~ COORD.X * COORD.Y + SAND + SILT + CLAY + PHWATER
-#> <environment: 0x5be95f6f3cd8>
+#> <environment: 0x55c25f520090>
 #> 
 #> Link function: log 
 #> Variance function: tweedie 
@@ -874,10 +874,10 @@ knitr::kable(master, digits = c(0, 0, 0, 10, 0, 0, 0, 0, 3, 2, 2))
 |  | dataset | n | R | beta_gap | rho_free | edges | dropped | flips | wald_p | sec_mcglm | sec_graph |
 |:---|:---|---:|---:|---:|---:|---:|:---|---:|---:|---:|---:|
 | marks | marks | 88 | 5 | 0 | 10 | 6 | 40% | 1 | 0.000 | 0.29 | 0.24 |
-| ahs | ahs | 5190 | 5 | 0 | 10 | 7 | 30% | 2 | 0.000 | 6.80 | 6.20 |
-| soil | soil | 250 | 3 | 0 | 3 | 2 | 33% | 1 | 0.000 | 3.02 | 2.91 |
-| Hunting | Hunting | 1216 | 2 | 0 | 1 | 0 | 100% | 1 | 0.079 | 4.13 | 4.11 |
-| soya | soya | 75 | 3 | 0 | 3 | 1 | 67% | 0 | 0.004 | 0.51 | 0.35 |
+| ahs | ahs | 5190 | 5 | 0 | 10 | 7 | 30% | 2 | 0.000 | 6.55 | 6.02 |
+| soil | soil | 250 | 3 | 0 | 3 | 2 | 33% | 1 | 0.000 | 2.94 | 2.84 |
+| Hunting | Hunting | 1216 | 2 | 0 | 1 | 0 | 100% | 1 | 0.079 | 4.02 | 4.06 |
+| soya | soya | 75 | 3 | 0 | 3 | 1 | 67% | 0 | 0.004 | 0.49 | 0.34 |
 | NewBorn | NewBorn | 270 | 3 | 0 | 3 | 1 | 67% | 0 | 0.001 | 0.14 | 0.14 |
 
 Read the columns in three groups.

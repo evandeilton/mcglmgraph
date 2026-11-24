@@ -10,7 +10,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/evandeilton/mcglmgraph/blob/main/inst/CITATION)
+[`inst/CITATION`](https://github.com/evandeilton/mcglmgraph/blob/v0.8.4/inst/CITATION)
 
 Lopes JE, Bonat WH (2026). *mcglmgraph: Graphical Multivariate
 Covariance Generalized Linear Models*. R package version 0.8.4.
