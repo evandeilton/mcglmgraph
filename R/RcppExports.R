@@ -348,8 +348,9 @@ cpp_pdag_to_dag <- function(amat) {
 #' Build the between-response precision matrix (C++ kernel)
 #'
 #' Computes K_b = sum_d eta_d Z_d and symmetrizes the result.
-#' @param eta numeric vector of length D (diagonal then edge parameters).
-#' @param bases numeric cube R x R x D of symmetric base matrices Z_d.
+#' @param eta numeric vector of length q_G, the number of graph parameters
+#'   (diagonal then edge parameters).
+#' @param bases numeric cube R x R x q_G of symmetric base matrices Z_d.
 #' @return The R x R symmetric precision matrix K_b = sum_d eta_d Z_d.
 #' @keywords internal
 cpp_build_precision <- function(eta, bases) {
@@ -372,8 +373,9 @@ cpp_precision_to_cov <- function(K) {
 #' Since Sigma_b = K_b^-1 and dK_b/deta_d = Z_d, the derivative is
 #' dSigma_b/deta_d = -Sigma_b Z_d Sigma_b; each matrix is symmetrized.
 #' @param Sigma_b the R x R covariance matrix.
-#' @param bases numeric cube R x R x D of base matrices Z_d.
-#' @return list of D symmetric matrices, each -Sigma_b Z_d Sigma_b.
+#' @param bases numeric cube R x R x q_G of base matrices Z_d, with q_G the
+#'   number of graph parameters.
+#' @return list of q_G symmetric matrices, each -Sigma_b Z_d Sigma_b.
 #' @keywords internal
 cpp_precision_derivatives <- function(Sigma_b, bases) {
     .Call(`_mcglmgraph_cpp_precision_derivatives`, Sigma_b, bases)
@@ -400,7 +402,8 @@ cpp_check_spd <- function(K, tol = 1e-10) {
 #' step_size is 2^-(max_halvings + 1), half the step that produced eta_new.
 #' @param eta current parameter vector.
 #' @param d Newton direction.
-#' @param bases numeric cube R x R x D of base matrices Z_d.
+#' @param bases numeric cube R x R x q_G of base matrices Z_d, with q_G the
+#'   number of graph parameters.
 #' @param max_halvings maximum number of step halvings (default 20).
 #' @param tol tolerance on the smallest eigenvalue (default 1e-10).
 #' @return list with eta_new (last point tried), step_size, halvings (number
@@ -444,11 +447,11 @@ cpp_partial_cor <- function(K) {
 #' returned as zero.
 #'
 #' @param K the R x R precision matrix of the fitted layer.
-#' @param Sdot list of D matrices dSigma_b/dtheta_d.
+#' @param Sdot list of q_G matrices dSigma_b/dtheta_d, one per graph parameter.
 #' @param pairs integer matrix q x 2 with the response pairs (i, j), 1-based.
-#' @param V estimated D x D covariance matrix of the parameter vector.
+#' @param V estimated q_G x q_G covariance matrix of the parameter vector.
 #' @return list with pcor (length q), variance (length q) and gradient (the
-#'   q x D matrix of gradients g).
+#'   q x q_G matrix of gradients g).
 #' @keywords internal
 cpp_pcor_delta <- function(K, Sdot, pairs, V) {
     .Call(`_mcglmgraph_cpp_pcor_delta`, K, Sdot, pairs, V)

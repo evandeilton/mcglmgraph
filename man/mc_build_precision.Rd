@@ -7,8 +7,9 @@
 mc_build_precision(eta, bases)
 }
 \arguments{
-\item{eta}{numeric vector of length \eqn{D = R + |E|}: the diagonal
-parameters first, then the edge parameters, in the order of \code{bases}.}
+\item{eta}{numeric vector of length \eqn{q_{\mathcal G} = R + |E|}, the
+number of graph parameters: the diagonal parameters first, then the edge
+parameters, in the order of \code{bases}.}
 
 \item{bases}{an object of class \code{"mcg_bases"} from
 \code{\link{mc_precision_bases}}.}

@@ -7,9 +7,10 @@
 cpp_build_precision(eta, bases)
 }
 \arguments{
-\item{eta}{numeric vector of length D (diagonal then edge parameters).}
+\item{eta}{numeric vector of length q_G, the number of graph parameters
+(diagonal then edge parameters).}
 
-\item{bases}{numeric cube R x R x D of symmetric base matrices Z_d.}
+\item{bases}{numeric cube R x R x q_G of symmetric base matrices Z_d.}
 }
 \value{
 The R x R symmetric precision matrix K_b = sum_d eta_d Z_d.

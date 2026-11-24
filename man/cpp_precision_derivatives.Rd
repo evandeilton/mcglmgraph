@@ -9,10 +9,11 @@ cpp_precision_derivatives(Sigma_b, bases)
 \arguments{
 \item{Sigma_b}{the R x R covariance matrix.}
 
-\item{bases}{numeric cube R x R x D of base matrices Z_d.}
+\item{bases}{numeric cube R x R x q_G of base matrices Z_d, with q_G the
+number of graph parameters.}
 }
 \value{
-list of D symmetric matrices, each -Sigma_b Z_d Sigma_b.
+list of q_G symmetric matrices, each -Sigma_b Z_d Sigma_b.
 }
 \description{
 Since Sigma_b = K_b^-1 and dK_b/deta_d = Z_d, the derivative is

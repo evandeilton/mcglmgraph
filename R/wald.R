@@ -8,7 +8,7 @@
 # mc_vcov_graph(), and a change of convention cannot reach one and miss another.
 
 # A contrast given as a matrix, as one row, or as the names of the parameters it
-# selects, returned as a numeric q x D matrix in the order of the parameters.
+# selects, returned as a numeric q x q_G matrix in the order of the parameters.
 .contrast_matrix <- function(L, par_names) {
   D <- length(par_names)
   if (is.character(L)) {

@@ -336,38 +336,70 @@ plot.mcglm_graph <- function(x, type = c("network", "residuals"), ...) {
 #' needs none of these conditions.
 #'
 #' @section When the shortcut is right:
-#' The shortcut rests on two facts of different kinds. One is algebraic: under
-#' the three conditions of the previous section, the first-stage Pearson
-#' equations make
-#' \eqn{r_{ri}^2-m_r} a linear combination of the first-stage contributions,
-#' whatever the data. That is what \code{\link{mc_two_stage_available}}
-#' checks. The other is statistical: the first stage must move the residual
-#' covariance, in the entries the equations of the graph read (the diagonal and
-#' the support), along a diagonal rescaling. Conditions (b) and (c) of the next
-#' section give it, and they are more than it needs:
+#' The statements of this section are of first order, with the number of
+#' responses fixed, \eqn{n\to\infty} and expectations read as limits of
+#' averages over independent units. The reduced form rests on two facts of
+#' different kinds. One is algebraic: under the three conditions of the
+#' previous section, and with the correlation between responses of the first
+#' stage unrestricted, the squared Pearson residual of each response, minus its
+#' average over the units, is a linear combination of the centered first-stage
+#' contributions of the same unit, whatever the data. That is what
+#' \code{\link{mc_two_stage_available}} checks. The other is statistical. Let
+#' \eqn{\mathbf M(\boldsymbol\alpha)=E\{\mathbf r_i(\boldsymbol\alpha)
+#' \mathbf r_i(\boldsymbol\alpha)^\top\}} be the second moment of the Pearson
+#' residuals as a function of the first-stage parameters and \eqn{\mathbf M_0}
+#' its value at their limit, which has unit diagonal. Let the Pearson residuals
+#' have mean zero at that limit, so that centering them, as the graph layer
+#' does, changes neither \eqn{\mathbf M_0} nor its derivatives. The reduced
+#' form holds when every first-stage parameter \eqn{\alpha_m} moves
+#' \eqn{\mathbf M} as a diagonal rescaling, that is, when for some diagonal
+#' matrix \eqn{\boldsymbol\Lambda_m}
+#' \deqn{\frac{\partial\mathbf M}{\partial\alpha_m}=
+#'   -(\boldsymbol\Lambda_m\mathbf M_0+\mathbf M_0\boldsymbol\Lambda_m)}
+#' on the diagonal and in the entries that the matrices \eqn{\mathbf K_b
+#' \dot{\boldsymbol\Sigma}_{b,d}\mathbf K_b} read: the edges in the GGM layer,
+#' the block of each node and its parents in the DAG layer. Conditions (b) and
+#' (c) of the section "What the correction reaches", the latter with
+#' \eqn{\mathbf M_0} in the place of \eqn{\boldsymbol\Sigma_b}, give it, with
+#' \eqn{\boldsymbol\Lambda_m=\operatorname{Diag}\{E(\partial\log\varsigma_{ri}/
+#' \partial\alpha_m)\}}. They are sufficient and can be weakened in two ways:
 #' \itemize{
-#'   \item with the constant variance function and the identity link, (c) is
-#'     not needed; when every response has the same design with an intercept,
-#'     (b) is not needed either, because the first stage then makes the Pearson
-#'     residuals orthogonal to the design. With designs that differ, a mean that
-#'     misses a covariate makes the shortcut too narrow;
-#'   \item with a variance function that depends on the mean, as
-#'     \code{"tweedie"} and \code{"binomialP"}, (c) can be weakened to
-#'     conditional second moments that change with the covariates only through
-#'     a factor common to the responses, but a residual correlation that
-#'     changes with them makes the shortcut wrong, the partial correlations
-#'     included. The mean must be right as well, except with the log link,
-#'     power two and a common design, where a misspecified mean acts at second
-#'     order only.
+#'   \item (c) can be replaced by \eqn{E(\mathbf r_i\mathbf r_i^\top\mid
+#'     \mathbf x_i)=c(\mathbf x_i)\mathbf M_0}, with \eqn{c} a positive function
+#'     common to the responses, and \eqn{\boldsymbol\Lambda_m} then carries
+#'     \eqn{E\{c(\mathbf x_i)\,\partial\log\varsigma_{ri}/\partial\alpha_m\}}.
+#'     When every response has the constant variance function (c) is not
+#'     needed in any form, whatever the link, because
+#'     \eqn{\partial\log\varsigma_{ri}/\partial\alpha_m} is then the same for
+#'     every unit;
+#'   \item (b) is used only to give the Pearson residuals mean zero and to make
+#'     \eqn{E(r_{si}\,\varsigma_{ri}^{-1}\partial\mu_{ri}/\partial
+#'     \boldsymbol\beta_r)=\mathbf 0} for every pair of responses \eqn{(r,s)}.
+#'     When all responses have the same design, with an intercept, and the
+#'     variance function and the link make that vector the row of the design
+#'     times a factor that is the same for every unit, as the constant variance
+#'     function with the identity link and the Tweedie variance function of
+#'     power fixed at two with the log link do, the quasi-score equations of
+#'     the first stage make the Pearson residuals orthogonal to the design in
+#'     the sample, and (b) is not needed. In the first of these two cases the
+#'     reduced form then holds with no condition on the mean or on the
+#'     conditional second moments. In the second, (c), or its weaker form, is
+#'     required of the Pearson residuals about the limit of the fitted mean;
+#'     when it holds for those about the true mean, a misspecified mean
+#'     violates it only at second order in the relative difference between
+#'     the two means.
 #' }
-#' A residual correlation that moves with the covariates makes the shortcut
-#' too wide, and a missing covariate in a response with its own design makes
-#' it too narrow. The full form needs none of these conditions:
-#' with the observed sensitivity it follows the influence function of Newey
-#' and McFadden (1994, Theorem 6.1), whenever the estimating functions of both
-#' stages have zero mean at their limits and the units, rows or clusters, are
-#' independent. Where both routes apply and the conditions hold
-#' they agree; where the conditions fail, the full form is the one to use, and
+#' Outside these cases the shortcut can omit a term of first order, whose sign
+#' is not determined. That is so for a mean that misses a covariate when the
+#' designs of the responses differ and, with a variance function that depends
+#' on the mean, for a residual correlation that moves with the covariates; the
+#' variances of the partial correlations can then be affected as well. The
+#' full form needs none of these conditions: with the observed sensitivity it
+#' estimates the influence function of Newey and McFadden (1994, Theorem 6.1)
+#' whenever the contributions of each unit, row or cluster, to the estimating
+#' functions of both stages have zero mean at their limits and the units are
+#' independent. Where both routes apply and the conditions hold they agree to
+#' first order; where the conditions fail, the full form is the one to use, and
 #' \code{method = "full"} asks for it. A bootstrap that resamples independent
 #' units or clusters and refits both stages (\code{\link{mc_graph_bootstrap}})
 #' propagates the first stage by construction and is the reference against
@@ -394,9 +426,9 @@ plot.mcglm_graph <- function(x, type = c("network", "residuals"), ...) {
 #' estimating equations as \pkg{mcglm} solved them, its bias correction of the
 #' Pearson equations included when the fit used it (\code{fit$con$correct}),
 #' formed by central differences of their totals, each one rebuilt with the
-#' routines of \pkg{mcglm}. That is the matrix the influence function asks for
-#' whatever the data, and it keeps the correction right when the mean or the
-#' second moments are misspecified, where the expected form can be far off.
+#' routines of \pkg{mcglm}. Divided by the number of units it estimates the
+#' matrix the influence function asks for whether or not the mean and the
+#' variance function of the first stage are correctly specified.
 #' With \code{sensitivity = "expected"} \eqn{\mathbf A} takes its model-based
 #' form, with blocks \eqn{\mathbf D^\top\mathbf C^{-1}\mathbf W\mathbf D} for
 #' the regression parameters,
@@ -407,29 +439,31 @@ plot.mcglm_graph <- function(x, type = c("network", "residuals"), ...) {
 #' parameters on the regression parameters, where \eqn{\mathbf D} is the
 #' derivative of the stacked means, \eqn{\mathbf C} the first-stage covariance
 #' and \eqn{\mathbf W} the diagonal matrix of prior weights. It is cheaper and
-#' agrees with
-#' the observed one when the first stage is correctly specified and well
-#' identified, though even then the two differ by a term of at most order
-#' \eqn{n^{-1/2}} relative to the naive sandwich. For a parameter the first
-#' stage nearly fixes, one whose corrected standard error is a small fraction
-#' of the naive one (the innovation variance of a root node, or a diagonal
-#' precision parameter strongly determined by the first stage), that
-#' difference can exceed the
-#' standard error itself, and the expected form is not robust to a
-#' misspecified working variance; the observed sensitivity is the one to use
-#' there. The observed form inherits the conditioning of the first stage:
+#' estimates the same limit when the mean and the covariance of the first
+#' stage are correctly specified; the corrected covariances of the two forms
+#' then differ by a term of order at most \eqn{n^{-1/2}} relative to the naive
+#' sandwich. For a parameter whose corrected variance vanishes to first order,
+#' as that of the innovation variance of a root node of a DAG does when the
+#' first stage fixes the average of the squared residuals of that response and
+#' their mean is zero at the limit, the variance reported under either form is
+#' of lower order than the naive one, and the two forms can differ by as much
+#' as their own size. When the mean or the variance function of the first stage
+#' is misspecified the expected form in general no longer
+#' estimates \eqn{\mathbf A}, the difference between the two corrected
+#' covariances can be of first order, and the observed sensitivity is the one
+#' to use. The observed form inherits the conditioning of the first stage:
 #' when that stage is weakly identified, as a Poisson-Tweedie fit whose
 #' estimated power and dispersion trade off against each other can be, its
-#' Jacobian is close to singular and the propagated variance can be several
-#' times too large. The error is then on the conservative side, and the
-#' first-stage estimates are themselves suspect. The attribute
+#' Jacobian is close to singular and the propagated variance is numerically
+#' unstable. The attribute
 #' \code{"sensitivity_rcond"} reports the reciprocal condition number of the
 #' sensitivity used, and comparing the two forms on the same fit is a direct
 #' check. Either way the
 #' block of the covariance parameters on the regression parameters is kept:
-#' the \code{joint_inv_sensitivity} of \pkg{mcglm} sets it to zero, it is not
+#' the \code{joint_inv_sensitivity} of \pkg{mcglm} has it at zero, it is not
 #' zero when the variance depends on the mean, and without it the regression
-#' part of the first stage does not cancel from the propagation term. The unit
+#' columns of \eqn{\mathbf B\mathbf A^{-1}} do not vanish under the conditions
+#' of the reduced form, where they must. The unit
 #' contributions of the first stage are centered: the bias correction is one
 #' term for the whole sample rather than a sum over units, so the contributions
 #' without it sum to minus it at the estimate, and a term common to all units
@@ -459,8 +493,8 @@ plot.mcglm_graph <- function(x, type = c("network", "residuals"), ...) {
 #' @section What the correction reaches:
 #' How much of the propagation reaches a given quantity is settled, for the
 #' undirected layer, by a diagonal-rescaling argument, under three conditions on
-#' the first stage, which are sufficient and, as the previous section says,
-#' not always necessary:
+#' the first stage, which are sufficient and, as the section "When the shortcut
+#' is right" says, not always necessary:
 #' \describe{
 #'   \item{(a)}{the Pearson residual has the form
 #'     \eqn{r_{ri}=(y_{ri}-\mu_{ri})/\varsigma_{ri}}, with the mean and the
@@ -494,9 +528,10 @@ plot.mcglm_graph <- function(x, type = c("network", "residuals"), ...) {
 #' \eqn{2\mathbf H^{-1}\mathbf Q_{\cdot r}} is the direction of a rescaling, so
 #' \code{type = "sandwich"} and the shortcut give them the same variance. That
 #' says nothing about whether the variance is right. When the first stage does
-#' not act as a rescaling, a residual correlation that moves with the
-#' covariates being the plain case, both are off on the partial correlations by
-#' the same factor, and only the full form accounts for it.
+#' not act as a rescaling, as can happen with a variance function that depends
+#' on the mean and a residual correlation that moves with the covariates, both
+#' can miss the same first-order term on the partial correlations, and only
+#' the full form accounts for it.
 #'
 #' The model-based form \eqn{\mathbf J_n^{-1}} agrees with the empirical
 #' forms only when, in addition, \eqn{\mathbf H=\mathbf J} and
@@ -529,8 +564,9 @@ plot.mcglm_graph <- function(x, type = c("network", "residuals"), ...) {
 #' @param sensitivity for the full form, \code{"observed"} (default) or
 #'   \code{"expected"}, the sensitivity of the first stage described in the
 #'   section "The full form".
-#' @return A \eqn{D \times D} symmetric matrix with the graph parameter names in
-#'   its dimnames, carrying the attributes \code{"type"}, \code{"variability"},
+#' @return A \eqn{q_{\mathcal G} \times q_{\mathcal G}} symmetric matrix, with
+#'   \eqn{q_{\mathcal G}} the number of graph parameters and their names in its
+#'   dimnames, carrying the attributes \code{"type"}, \code{"variability"},
 #'   \code{"edge_pos"} (positions of the edge parameters), \code{"n_clusters"},
 #'   \code{"small_sample"}, which is \code{TRUE} exactly when the factor
 #'   \eqn{G/(G-1)} was applied, and the inversion diagnostics

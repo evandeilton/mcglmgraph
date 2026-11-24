@@ -138,6 +138,15 @@ longitudinal data: unconstrained parameterisation. \emph{Biometrika},
 Spirtes, P., Glymour, C. and Scheines, R. (2000). \emph{Causation,
 Prediction, and Search}, 2nd edition. MIT Press, Cambridge, Massachusetts.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/evandeilton/mcglmgraph}
+  \item \url{https://evandeilton.github.io/mcglmgraph/}
+  \item Report bugs at \url{https://github.com/evandeilton/mcglmgraph/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Jose Evandeilton Lopes \email{evandeilton@gmail.com}
 

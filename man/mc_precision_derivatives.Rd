@@ -12,15 +12,16 @@ mc_precision_derivatives(Sigma_b, bases)
 \item{bases}{an object of class \code{"mcg_bases"}.}
 }
 \value{
-A list of \eqn{D} symmetric \eqn{R \times R} matrices in the order
-  of \code{bases}.
+A list of \eqn{q_{\mathcal G}} symmetric \eqn{R \times R} matrices
+  in the order of \code{bases}.
 }
 \description{
 Returns the derivatives of \eqn{\Sigma_b = K_b^{-1}} with respect to the
 precision parameters,
 \deqn{\frac{\partial \Sigma_b}{\partial \eta_d} = -\Sigma_b Z_d \Sigma_b,
-  \qquad d = 1, \dots, D,}
-which follow from \eqn{\partial K_b^{-1} = -K_b^{-1}(\partial K_b)K_b^{-1}}
+  \qquad d = 1, \dots, q_{\mathcal G},}
+with \eqn{q_{\mathcal G} = R + |E|} the number of graph parameters, which
+follow from \eqn{\partial K_b^{-1} = -K_b^{-1}(\partial K_b)K_b^{-1}}
 and \eqn{\partial K_b/\partial\eta_d = Z_d}. Each matrix is symmetrized.
 }
 \examples{

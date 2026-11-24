@@ -17,9 +17,10 @@ the order of the edge parameters.}
 }
 \value{
 An object of class \code{"mcg_bases"}: a list with components
-  \code{bases} (list of \eqn{D} symmetric \eqn{R \times R} matrices),
-  \code{cube} (the same bases as an \eqn{R \times R \times D} array, the
-  form consumed by the C++ kernels), \code{names} (parameter names
+  \code{bases} (list of \eqn{q_{\mathcal G}} symmetric \eqn{R \times R}
+  matrices), \code{cube} (the same bases as an
+  \eqn{R \times R \times q_{\mathcal G}} array, the form consumed by the
+  C++ kernels), \code{names} (parameter names
   \code{eta_kk} and \code{eta_ij}), \code{type} (\code{"diag"} or
   \code{"edge"} for each base), \code{edges} (the canonical edge matrix) and
   \code{R}.
@@ -27,10 +28,10 @@ An object of class \code{"mcg_bases"}: a list with components
 \description{
 Constructs the base matrices \eqn{Z_d} of the linear-in-precision predictor
 of the Gaussian graphical model (GGM) layer,
-\deqn{K_b = \sum_{d=1}^{D} \eta_d Z_d,\qquad \Sigma_b = K_b^{-1},}
+\deqn{K_b = \sum_{d=1}^{q_{\mathcal G}} \eta_d Z_d,\qquad \Sigma_b = K_b^{-1},}
 where \eqn{K_b} is the between-response precision matrix and
-\eqn{D = R + |E|}. There are \eqn{R} diagonal bases
-\eqn{Z_{kk} = e_k e_k^\top} and one symmetric base
+\eqn{q_{\mathcal G} = R + |E|} is the number of graph parameters. There
+are \eqn{R} diagonal bases \eqn{Z_{kk} = e_k e_k^\top} and one symmetric base
 \eqn{Z_{ij} = e_i e_j^\top + e_j e_i^\top} per edge \eqn{(i, j)}, so that
 \eqn{\eta_{kk} = [K_b]_{kk}} and \eqn{\eta_{ij} = [K_b]_{ij}}. The pair
 \eqn{(i, j)} is conditionally independent given the other responses, in the

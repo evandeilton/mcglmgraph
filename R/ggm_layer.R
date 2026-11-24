@@ -5,10 +5,10 @@
 #'
 #' Constructs the base matrices \eqn{Z_d} of the linear-in-precision predictor
 #' of the Gaussian graphical model (GGM) layer,
-#' \deqn{K_b = \sum_{d=1}^{D} \eta_d Z_d,\qquad \Sigma_b = K_b^{-1},}
+#' \deqn{K_b = \sum_{d=1}^{q_{\mathcal G}} \eta_d Z_d,\qquad \Sigma_b = K_b^{-1},}
 #' where \eqn{K_b} is the between-response precision matrix and
-#' \eqn{D = R + |E|}. There are \eqn{R} diagonal bases
-#' \eqn{Z_{kk} = e_k e_k^\top} and one symmetric base
+#' \eqn{q_{\mathcal G} = R + |E|} is the number of graph parameters. There
+#' are \eqn{R} diagonal bases \eqn{Z_{kk} = e_k e_k^\top} and one symmetric base
 #' \eqn{Z_{ij} = e_i e_j^\top + e_j e_i^\top} per edge \eqn{(i, j)}, so that
 #' \eqn{\eta_{kk} = [K_b]_{kk}} and \eqn{\eta_{ij} = [K_b]_{ij}}. The pair
 #' \eqn{(i, j)} is conditionally independent given the other responses, in the
@@ -22,9 +22,10 @@
 #'   empty graph. The edges are stored sorted in lexicographic order, which is
 #'   the order of the edge parameters.
 #' @return An object of class \code{"mcg_bases"}: a list with components
-#'   \code{bases} (list of \eqn{D} symmetric \eqn{R \times R} matrices),
-#'   \code{cube} (the same bases as an \eqn{R \times R \times D} array, the
-#'   form consumed by the C++ kernels), \code{names} (parameter names
+#'   \code{bases} (list of \eqn{q_{\mathcal G}} symmetric \eqn{R \times R}
+#'   matrices), \code{cube} (the same bases as an
+#'   \eqn{R \times R \times q_{\mathcal G}} array, the form consumed by the
+#'   C++ kernels), \code{names} (parameter names
 #'   \code{eta_kk} and \code{eta_ij}), \code{type} (\code{"diag"} or
 #'   \code{"edge"} for each base), \code{edges} (the canonical edge matrix) and
 #'   \code{R}.
@@ -74,8 +75,9 @@ mc_precision_bases <- function(R, edges = NULL) {
 #' symmetrized; positive definiteness is not checked here (see
 #' \code{\link{mc_check_spd}}).
 #'
-#' @param eta numeric vector of length \eqn{D = R + |E|}: the diagonal
-#'   parameters first, then the edge parameters, in the order of \code{bases}.
+#' @param eta numeric vector of length \eqn{q_{\mathcal G} = R + |E|}, the
+#'   number of graph parameters: the diagonal parameters first, then the edge
+#'   parameters, in the order of \code{bases}.
 #' @param bases an object of class \code{"mcg_bases"} from
 #'   \code{\link{mc_precision_bases}}.
 #' @return The \eqn{R \times R} symmetric precision matrix \eqn{K_b}.
@@ -119,14 +121,15 @@ mc_precision_to_covariance <- function(K) {
 #' Returns the derivatives of \eqn{\Sigma_b = K_b^{-1}} with respect to the
 #' precision parameters,
 #' \deqn{\frac{\partial \Sigma_b}{\partial \eta_d} = -\Sigma_b Z_d \Sigma_b,
-#'   \qquad d = 1, \dots, D,}
-#' which follow from \eqn{\partial K_b^{-1} = -K_b^{-1}(\partial K_b)K_b^{-1}}
+#'   \qquad d = 1, \dots, q_{\mathcal G},}
+#' with \eqn{q_{\mathcal G} = R + |E|} the number of graph parameters, which
+#' follow from \eqn{\partial K_b^{-1} = -K_b^{-1}(\partial K_b)K_b^{-1}}
 #' and \eqn{\partial K_b/\partial\eta_d = Z_d}. Each matrix is symmetrized.
 #'
 #' @param Sigma_b the between-response covariance matrix \eqn{\Sigma_b}.
 #' @param bases an object of class \code{"mcg_bases"}.
-#' @return A list of \eqn{D} symmetric \eqn{R \times R} matrices in the order
-#'   of \code{bases}.
+#' @return A list of \eqn{q_{\mathcal G}} symmetric \eqn{R \times R} matrices
+#'   in the order of \code{bases}.
 #' @family GGM layer
 #' @examples
 #' b <- mc_precision_bases(3)

@@ -9,15 +9,15 @@ cpp_pcor_delta(K, Sdot, pairs, V)
 \arguments{
 \item{K}{the R x R precision matrix of the fitted layer.}
 
-\item{Sdot}{list of D matrices dSigma_b/dtheta_d.}
+\item{Sdot}{list of q_G matrices dSigma_b/dtheta_d, one per graph parameter.}
 
 \item{pairs}{integer matrix q x 2 with the response pairs (i, j), 1-based.}
 
-\item{V}{estimated D x D covariance matrix of the parameter vector.}
+\item{V}{estimated q_G x q_G covariance matrix of the parameter vector.}
 }
 \value{
 list with pcor (length q), variance (length q) and gradient (the
-  q x D matrix of gradients g).
+  q x q_G matrix of gradients g).
 }
 \description{
 For the pair (i, j) the partial correlation is

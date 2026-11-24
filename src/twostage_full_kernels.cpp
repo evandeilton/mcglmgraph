@@ -8,9 +8,11 @@
 // with A the sensitivity of the first stage and B = -E( d psi_2i / d alpha' )
 // the cross sensitivity. The shortcut in twostage_kernels.cpp replaces
 // B A^-1 psi_1i by a closed form that needs second-stage quantities only; that
-// closed form rests on a single multiplicative dispersion per response and on an
-// identity within-response structure. Outside those conditions the three pieces
-// have to be formed, and that is what this file does.
+// closed form rests on a single multiplicative dispersion per response, an
+// identity within-response structure and constant prior weights, and on a
+// first stage that moves the residual covariance as a diagonal rescaling.
+// Outside those conditions the three pieces have to be formed, and that is what
+// this file does.
 //
 // The first stage is the MCGLM of mcglm. With the R responses stacked response
 // by response, the quasi-score and the Pearson functions are
@@ -21,7 +23,8 @@
 // both are sums over the blocks, and the block sums are the unit contributions
 // psi_1u.
 //
-// The sensitivity is taken from its definition, E(d psi_1 / d alpha'):
+// The expected sensitivity is E(d psi_1 / d alpha') under a correctly specified
+// first stage, E(y - mu) = 0 and E{(y - mu)(y - mu)'} = C:
 //   S_bb  = -D' C^-1 W D,
 //   S_ll' = -tr( C^-1 Cdot_l W C^-1 Cdot_l' ),
 //   S_lb  = -tr( C^-1 Cdot_l W C^-1 Cdot_b ),   Cdot_b = dC / d beta_b,
@@ -29,8 +32,10 @@
 // the last because the quasi-score is linear in y - mu and E(y - mu) = 0. mcglm
 // reports the first two and sets S_lb to zero, since the covariance it builds at
 // the end of the fit carries no derivative in beta. S_lb is not zero when the
-// variance depends on the mean, and without it the regression part of the first
-// stage stops canceling from the propagation term.
+// variance depends on the mean. Under the conditions of the closed form, with a
+// correctly specified mean, the regression columns of B A^-1 are zero, and with
+// S_lb set to zero they are not: the regression part of the first stage stops
+// canceling from the propagation term.
 //
 // The Pearson residual of the second stage is r_ri = (y_ri - mu_ri) / s_ri, with
 // s_ri^2 = C_(ri),(ri). Its derivative in the first-stage parameters is

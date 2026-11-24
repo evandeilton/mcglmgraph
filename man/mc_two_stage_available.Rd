@@ -93,13 +93,18 @@ stage moves the residual covariance along a diagonal rescaling, rests on
 statements about the data that cannot be read off the fit:
 \itemize{
   \item a correctly specified mean, condition (b) of the section "What the
-    correction reaches" of \code{\link{mc_vcov_graph}}, which the constant
-    variance function with a design common to all responses does without;
+    correction reaches" of \code{\link{mc_vcov_graph}}. It is not needed
+    when all responses have the same design, with an intercept, and the
+    derivative of the mean in the linear predictor divided by the standard
+    deviation is the same for every unit, as with the constant variance
+    function and the identity link, or with the Tweedie variance function
+    of power fixed at two and the log link;
   \item a conditional residual covariance that does not depend on the
-    covariates, condition (c) there, which the constant variance function
-    does without, and which a variance function that depends on the mean
-    needs at least in the weaker form of second moments that change with the
-    covariates only through a factor common to the responses;
+    covariates, condition (c) there. It is not needed, whatever the link,
+    when every response has the constant variance function; a variance
+    function that depends on the mean needs it at least in the weaker form
+    of conditional second moments of the Pearson residuals that change with
+    the covariates only through a factor common to the responses;
   \item independence between the units, that is between the rows once the
     within-response structure is the identity, or between the clusters.
 }
