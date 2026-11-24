@@ -27,7 +27,7 @@ contrast that selects those \(|E_{\max}|-|\hat E|\) parameters."><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">mcglmgraph</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -112,10 +112,13 @@ no effect without <code>cluster</code> and is refused with
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>for <code>type = "two_stage"</code>, <code>"auto"</code> (the shortcut
-when it applies, the full form otherwise; on a DAG with an immorality, the
-full form whenever it is available), <code>"shortcut"</code> or <code>"full"</code>.
-It has no meaning for the other two types.</p></dd>
+<dd><p>for <code>type = "two_stage"</code>, the route of the correction:
+<code>"shortcut"</code>, <code>"full"</code>, or <code>"auto"</code> (default).
+<code>"auto"</code> takes the full form when it is available and either a
+response has a variance function other than <code>"constant"</code> or the fitted
+DAG has an immorality; in every other case it takes the shortcut when it
+applies and the full form when it does not. The full form rebuilds the
+first stage and is slower. It has no meaning for the other two types.</p></dd>
 
 </dl></div>
     <div class="section level2">

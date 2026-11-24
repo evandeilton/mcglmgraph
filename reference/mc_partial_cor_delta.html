@@ -39,7 +39,7 @@ parameters are \((\boldsymbol\gamma,\boldsymbol\delta)\)."><meta property="og:im
 
     <a class="navbar-brand me-2" href="../index.html">mcglmgraph</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,7 +94,8 @@ parameters are \((\boldsymbol\gamma,\boldsymbol\delta)\).</p>
 <span>  cluster <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  small_sample <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
-<span>  interval <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wald"</span>, <span class="st">"fisher"</span><span class="op">)</span></span>
+<span>  interval <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wald"</span>, <span class="st">"fisher"</span><span class="op">)</span>,</span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"shortcut"</span>, <span class="st">"full"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -119,10 +120,12 @@ the full form they agree to first order under the conditions of the
 section "What the correction reaches" of <code><a href="mc_vcov_graph.html">mc_vcov_graph</a></code>.
 Whether that common variance is right depends on the same conditions: a
 residual correlation that moves with the covariates puts both off, and
-only the full form, <code><a href="mc_vcov_graph.html">mc_vcov_graph</a>(type = "two_stage", method
-= "full")</code>, accounts for it. The model-based form agrees with the empirical
-ones only when, in addition, \(\mathbf V=\mathbf J\), which fails
-outside the Gaussian fourth-moment regime.</p></dd>
+only the full form accounts for it, which <code>method = "full"</code> requests
+and <code>method = "auto"</code> takes, when it is available, for a fit with a
+variance function other than <code>"constant"</code>. The model-based form
+agrees with the empirical ones only when, in addition,
+\(\mathbf V=\mathbf J\), which fails outside the Gaussian fourth-moment
+regime.</p></dd>
 
 
 <dt id="arg-cluster">cluster<a class="anchor" aria-label="anchor" href="#arg-cluster"></a></dt>
@@ -152,6 +155,13 @@ partial correlation, or <code>"fisher"</code>, symmetric on the scale of
 the bounds stay inside \((-1, 1)\). The standard error, the statistic
 and the p-value are the same under both.</p></dd>
 
+
+<dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
+<dd><p>for <code>variability = "two_stage"</code>, the route of the
+correction, <code>"auto"</code> (default), <code>"shortcut"</code> or <code>"full"</code>, as
+in <code><a href="mc_vcov_graph.html">mc_vcov_graph</a></code>. It has no meaning for the other two forms
+and is refused with them when it is not <code>"auto"</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -171,10 +181,12 @@ and the p-value are the same under both.</p></dd>
   follow the pairs \((i, j)\), \(i &lt; j\), in lexicographic order. The
   attribute <code>"gradient"</code> holds the matrix of gradients
   \(\mathbf g_{ij}\), with one row per pair and one column per graph
-  parameter, the row being <code>NA</code> for a pair with
-  <code>present = FALSE</code> or an undefined partial correlation, and the
-  attributes <code>"variability"</code>, <code>"level"</code> and
-  <code>"interval"</code> record the choices used.</p>
+  parameter. The row of a pair with <code>present = FALSE</code> is exactly 0, the
+  gradient of a constant, and the row of a pair with an undefined partial
+  correlation is <code>NA</code>. The attributes <code>"variability"</code>,
+  <code>"level"</code> and <code>"interval"</code> record the choices used; with
+  <code>variability = "two_stage"</code> the attribute <code>"two_stage_method"</code>
+  records the route taken.</p>
     </div>
     <div class="section level2">
     <h2 id="scope-of-the-inference">Scope of the inference<a class="anchor" aria-label="anchor" href="#scope-of-the-inference"></a></h2>
@@ -198,8 +210,12 @@ explicitly mark graph-layer inference as uncertified.</p>
 <p>In the GGM layer, a pair outside the specified precision support is zero by
 construction and has no sampling distribution. Its row reports
 <code>pcor = 0</code> and <code>NA</code> for <code>se</code>, <code>statistic</code>,
-<code>p_value</code>, <code>lower</code> and <code>upper</code>, and its row of the
-<code>"gradient"</code> attribute is <code>NA</code>; this is decided from
+<code>p_value</code>, <code>lower</code> and <code>upper</code>. Its row of the
+<code>"gradient"</code> attribute is exactly 0 in every column: the partial
+correlation of such a pair is the constant 0, and the gradient of a constant
+is 0. That row of zeros is not a standard error of zero: a quadratic form in
+it gives 0, while the pair has no sampling distribution at all, which is
+what the <code>NA</code> in <code>se</code> says. All of this is decided from
 <code>present</code> and not from the size of the standard error. In the DAG
 layer, structural zeros of the precision are instead determined by the moral
 graph. In particular, two

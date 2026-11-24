@@ -68,10 +68,13 @@ mc_wald_graph(
 
 - method:
 
-  for `type = "two_stage"`, `"auto"` (the shortcut when it applies, the
-  full form otherwise; on a DAG with an immorality, the full form
-  whenever it is available), `"shortcut"` or `"full"`. It has no meaning
-  for the other two types.
+  for `type = "two_stage"`, the route of the correction: `"shortcut"`,
+  `"full"`, or `"auto"` (default). `"auto"` takes the full form when it
+  is available and either a response has a variance function other than
+  `"constant"` or the fitted DAG has an immorality; in every other case
+  it takes the shortcut when it applies and the full form when it does
+  not. The full form rebuilds the first stage and is slower. It has no
+  meaning for the other two types.
 
 ## Value
 
@@ -131,7 +134,11 @@ on its range, judged against the model-based variance of the same
 contrast. That happens with `type = "two_stage"` for a parameter the
 first stage fixes exactly, such as the innovation variance of a root
 node of a DAG with Gaussian intercept-only margins, whose corrected
-variance is zero.
+variance is zero. A contrast counts as having no variability when its
+variance is at most \\10^{-6}\\ of its model-based variance, on the
+scale of the model-based standard deviations; the margin covers the
+numerical residue that the full form leaves where the exact variance is
+zero.
 
 ## What the reference distribution requires
 

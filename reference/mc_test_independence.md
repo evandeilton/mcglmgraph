@@ -17,7 +17,8 @@ mc_test_independence(
   robust = FALSE,
   cluster = NULL,
   small_sample = FALSE,
-  type = NULL
+  type = NULL,
+  method = c("auto", "shortcut", "full")
 )
 ```
 
@@ -58,6 +59,14 @@ mc_test_independence(
   contradict it. The default `NULL` uses `"sandwich"` if `robust` is
   `TRUE` and `"model"` otherwise.
 
+- method:
+
+  for `type = "two_stage"`, the route of the correction, `"auto"`
+  (default), `"shortcut"` or `"full"`, as in
+  [`mc_vcov_graph`](https://evandeilton.github.io/mcglmgraph/reference/mc_vcov_graph.md).
+  It has no meaning for the other two types and is refused with them
+  when it is not `"auto"`.
+
 ## Value
 
 An object of class `"htest"`: the Wald `statistic`, the degrees of
@@ -83,12 +92,13 @@ The default covariance is the model-based one, for which that reference
 also requires the working identity \\\mathbf V=\mathbf J\\ (a correctly
 specified second moment and Gaussian fourth moments);
 `type = "sandwich"` does not use it, and `type = "two_stage"` also
-accounts for the estimation of the first stage. The edges tested are
-those of the support of the fit, and the graph is treated as fixed: for
-a support chosen by a search over graphs, the result is descriptive. It
-is a standalone function so that the inherited `anova.mcglm` method
-remains available on the object. The function refuses fits whose
-numerical diagnostics mark graph-layer inference as uncertified.
+accounts for the estimation of the first stage, by the route `method`
+selects. The edges tested are those of the support of the fit, and the
+graph is treated as fixed: for a support chosen by a search over graphs,
+the result is descriptive. It is a standalone function so that the
+inherited `anova.mcglm` method remains available on the object. The
+function refuses fits whose numerical diagnostics mark graph-layer
+inference as uncertified.
 
 ## References
 

@@ -14,8 +14,12 @@ which mcglm does and the check therefore does not read. The check
 below is that structural one: on a
 DAG with an immorality the shortcut can qualify and still be, for the
 parameters of the collider and of its descendants, only a first-order
-approximation to the reduced form, which is why
-method = &quot;auto&quot; prefers the full form there. The full form needs
+approximation to the reduced form, which is one of the two cases in which
+method = &quot;auto&quot; takes the full form when it is available. The other
+is a first stage with a variance function other than &quot;constant&quot;: the
+shortcut then rests on conditions on the mean and on the residual covariance
+that the fit does not show (see the section &quot;What the check cannot verify&quot;).
+The full form needs
 only that the first stage be a sum over units, which is what the rows are
 when the within-response structure is the identity, and what the clusters
 must be otherwise."><meta property="og:description" content="Reports which of the two routes that propagate the first-stage uncertainty
@@ -33,8 +37,12 @@ which mcglm does and the check therefore does not read. The check
 below is that structural one: on a
 DAG with an immorality the shortcut can qualify and still be, for the
 parameters of the collider and of its descendants, only a first-order
-approximation to the reduced form, which is why
-method = &quot;auto&quot; prefers the full form there. The full form needs
+approximation to the reduced form, which is one of the two cases in which
+method = &quot;auto&quot; takes the full form when it is available. The other
+is a first stage with a variance function other than &quot;constant&quot;: the
+shortcut then rests on conditions on the mean and on the residual covariance
+that the fit does not show (see the section &quot;What the check cannot verify&quot;).
+The full form needs
 only that the first stage be a sum over units, which is what the rows are
 when the within-response structure is the identity, and what the clusters
 must be otherwise."><meta property="og:image" content="https://evandeilton.github.io/mcglmgraph/logo.png"></head><body>
@@ -45,7 +53,7 @@ must be otherwise."><meta property="og:image" content="https://evandeilton.githu
 
     <a class="navbar-brand me-2" href="../index.html">mcglmgraph</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,8 +96,12 @@ which <span class="pkg">mcglm</span> does and the check therefore does not read.
 below is that structural one: on a
 DAG with an immorality the shortcut can qualify and still be, for the
 parameters of the collider and of its descendants, only a first-order
-approximation to the reduced form, which is why
-<code>method = "auto"</code> prefers the full form there. The full form needs
+approximation to the reduced form, which is one of the two cases in which
+<code>method = "auto"</code> takes the full form when it is available. The other
+is a first stage with a variance function other than <code>"constant"</code>: the
+shortcut then rests on conditions on the mean and on the residual covariance
+that the fit does not show (see the section "What the check cannot verify").
+The full form needs
 only that the first stage be a sum over units, which is what the rows are
 when the within-response structure is the identity, and what the clusters
 must be otherwise.</p>
@@ -112,8 +124,9 @@ must be otherwise.</p>
 <dd><p>optional vector with one identifier per observational row,
 as in <code><a href="mc_vcov_graph.html">mc_vcov_graph</a></code>; default <code>NULL</code>. It changes only
 whether the full form is available for a within-response structure that is
-not the identity, and, on a DAG with an immorality, which route
-<code>method = "auto"</code> takes.</p></dd>
+not the identity, and with it the route <code>method = "auto"</code> takes on a
+DAG with an immorality or on a fit with a variance function other than
+<code>"constant"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -122,9 +135,13 @@ not the identity, and, on a DAG with an immorality, which route
   (character vector, empty when the shortcut applies), the verdict and the
   reasons for the shortcut; <code>full_ok</code> and <code>why_full</code>, the same for
   the full form; and <code>method</code>, a string, <code>"shortcut"</code> or
-  <code>"full"</code>, the route <code>mc_vcov_graph(type = "two_stage")</code> takes by
-  default (<code>method = "auto"</code>), or <code>NA_character_</code> when neither
-  applies. The components <code>ok</code> and <code>why</code> repeat
+  <code>"full"</code>, the route <code>method = "auto"</code> takes in
+  <code>mc_vcov_graph(type = "two_stage")</code> and in the functions that consume
+  it, or <code>NA_character_</code> when neither applies. The shortcut can apply
+  (<code>shortcut_ok = TRUE</code>) while <code>method</code> is <code>"full"</code>:
+  <code>"auto"</code> takes the full form, when it is available, for a fit with a
+  variance function other than <code>"constant"</code> and for a DAG with an
+  immorality. The components <code>ok</code> and <code>why</code> repeat
   <code>shortcut_ok</code> and <code>why_shortcut</code>.</p>
     </div>
     <div class="section level2">
@@ -196,6 +213,10 @@ within-response structure qualifies, while its neighboring sites remain
 dependent, since coordinates in the mean do not whiten the residuals. There
 the rows are not independent units, and neither the corrected form nor the
 sandwich it corrects has the variance it claims.</p>
+<p>Since the first two cannot be verified, and the constant variance function
+is the case that does not need the second, <code>method = "auto"</code> takes the
+full form, when it is available, for a fit in which some response has
+another variance function.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

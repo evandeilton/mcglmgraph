@@ -13,13 +13,13 @@ Source:
 [`inst/CITATION`](https://github.com/evandeilton/mcglmgraph/blob/main/inst/CITATION)
 
 Lopes JE, Bonat WH (2026). *mcglmgraph: Graphical Multivariate
-Covariance Generalized Linear Models*. R package version 0.8.3.
+Covariance Generalized Linear Models*. R package version 0.8.4.
 
     @Manual{,
       title = {mcglmgraph: Graphical Multivariate Covariance Generalized Linear Models},
       author = {Jose Evandeilton Lopes and Wagner Hugo Bonat},
       year = {2026},
-      note = {R package version 0.8.3},
+      note = {R package version 0.8.4},
     }
 
 Bonat WH, Jorgensen B (2016). “Multivariate covariance generalized

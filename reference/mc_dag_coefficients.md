@@ -39,7 +39,8 @@ print(x, ...)
 
   `"model"` for \\\mathbf J_n^{-1}\\, `"empirical"` for the sandwich, or
   `"two_stage"` for the sandwich corrected for the estimation of the
-  residuals.
+  residuals, by the route `method = "auto"` takes in
+  [`mc_vcov_graph`](https://evandeilton.github.io/mcglmgraph/reference/mc_vcov_graph.md).
 
 - level:
 

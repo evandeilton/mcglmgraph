@@ -28,7 +28,8 @@ mc_partial_cor_delta(
   cluster = NULL,
   small_sample = FALSE,
   level = 0.95,
-  interval = c("wald", "fisher")
+  interval = c("wald", "fisher"),
+  method = c("auto", "shortcut", "full")
 )
 ```
 
@@ -53,11 +54,11 @@ mc_partial_cor_delta(
   [`mc_vcov_graph`](https://evandeilton.github.io/mcglmgraph/reference/mc_vcov_graph.md).
   Whether that common variance is right depends on the same conditions:
   a residual correlation that moves with the covariates puts both off,
-  and only the full form,
-  [`mc_vcov_graph`](https://evandeilton.github.io/mcglmgraph/reference/mc_vcov_graph.md)`(type = "two_stage", method = "full")`,
-  accounts for it. The model-based form agrees with the empirical ones
-  only when, in addition, \\\mathbf V=\mathbf J\\, which fails outside
-  the Gaussian fourth-moment regime.
+  and only the full form accounts for it, which `method = "full"`
+  requests and `method = "auto"` takes, when it is available, for a fit
+  with a variance function other than `"constant"`. The model-based form
+  agrees with the empirical ones only when, in addition, \\\mathbf
+  V=\mathbf J\\, which fails outside the Gaussian fourth-moment regime.
 
 - cluster:
 
@@ -86,6 +87,14 @@ mc_partial_cor_delta(
   bounds stay inside \\(-1, 1)\\. The standard error, the statistic and
   the p-value are the same under both.
 
+- method:
+
+  for `variability = "two_stage"`, the route of the correction, `"auto"`
+  (default), `"shortcut"` or `"full"`, as in
+  [`mc_vcov_graph`](https://evandeilton.github.io/mcglmgraph/reference/mc_vcov_graph.md).
+  It has no meaning for the other two forms and is refused with them
+  when it is not `"auto"`.
+
 ## Value
 
 A data frame with one row per pair of responses (\\q = R(R-1)/2\\ rows)
@@ -101,10 +110,12 @@ the covariance of the parameters is not positive semidefinite, `se` and
 what follows from it are `NA`. The rows follow the pairs \\(i, j)\\, \\i
 \< j\\, in lexicographic order. The attribute `"gradient"` holds the
 matrix of gradients \\\mathbf g\_{ij}\\, with one row per pair and one
-column per graph parameter, the row being `NA` for a pair with
-`present = FALSE` or an undefined partial correlation, and the
-attributes `"variability"`, `"level"` and `"interval"` record the
-choices used.
+column per graph parameter. The row of a pair with `present = FALSE` is
+exactly 0, the gradient of a constant, and the row of a pair with an
+undefined partial correlation is `NA`. The attributes `"variability"`,
+`"level"` and `"interval"` record the choices used; with
+`variability = "two_stage"` the attribute `"two_stage_method"` records
+the route taken.
 
 ## Scope of the inference
 
@@ -124,17 +135,21 @@ explicitly mark graph-layer inference as uncertified.
 In the GGM layer, a pair outside the specified precision support is zero
 by construction and has no sampling distribution. Its row reports
 `pcor = 0` and `NA` for `se`, `statistic`, `p_value`, `lower` and
-`upper`, and its row of the `"gradient"` attribute is `NA`; this is
-decided from `present` and not from the size of the standard error. In
-the DAG layer, structural zeros of the precision are instead determined
-by the moral graph. In particular, two non-adjacent parents of a common
-child can have a nonzero precision entry even though no arrow joins
-them. Therefore `present` denotes adjacency in the specified GGM support
-or in the moral graph of the specified DAG. Rows with `present = FALSE`
-are structural constraints, not estimates of a null association, and
-carry no inference; a `TRUE` value says only that the entry is
-structurally allowed, since parameter cancellation can still make it
-zero.
+`upper`. Its row of the `"gradient"` attribute is exactly 0 in every
+column: the partial correlation of such a pair is the constant 0, and
+the gradient of a constant is 0. That row of zeros is not a standard
+error of zero: a quadratic form in it gives 0, while the pair has no
+sampling distribution at all, which is what the `NA` in `se` says. All
+of this is decided from `present` and not from the size of the standard
+error. In the DAG layer, structural zeros of the precision are instead
+determined by the moral graph. In particular, two non-adjacent parents
+of a common child can have a nonzero precision entry even though no
+arrow joins them. Therefore `present` denotes adjacency in the specified
+GGM support or in the moral graph of the specified DAG. Rows with
+`present = FALSE` are structural constraints, not estimates of a null
+association, and carry no inference; a `TRUE` value says only that the
+entry is structurally allowed, since parameter cancellation can still
+make it zero.
 
 ## References
 

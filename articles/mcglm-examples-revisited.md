@@ -210,8 +210,6 @@ mc_test_independence(fit_hunt)
 #> X-squared = 26.626, df = 1, p-value = 2.469e-07
 # Sampling unit: the hunter. The contributions of the records of one hunter
 # are summed, and the first-stage estimation is propagated by the full form
-V_hunt <- mc_vcov_graph(fit_hunt, type = "two_stage", method = "full",
-                        cluster = Hunting$HUNTER, small_sample = TRUE)
 mc_wald_graph(fit_hunt, "eta_12", type = "two_stage", method = "full",
               cluster = Hunting$HUNTER, small_sample = TRUE)
 #> 
@@ -223,16 +221,12 @@ mc_wald_graph(fit_hunt, "eta_12", type = "two_stage", method = "full",
 #> sample estimates:
 #> [1] 0.1539221
 # Delta-method interval for the partial correlation -eta_12/sqrt(eta_11 eta_22)
-eta <- coef(fit_hunt, type = "graph")
-pc  <- -eta[["eta_12"]] / sqrt(eta[["eta_11"]] * eta[["eta_22"]])
-grad <- c(eta_11 = -pc / (2 * eta[["eta_11"]]),
-          eta_22 = -pc / (2 * eta[["eta_22"]]),
-          eta_12 = -1 / sqrt(eta[["eta_11"]] * eta[["eta_22"]]))
-se <- sqrt(drop(grad %*% V_hunt[names(grad), names(grad)] %*% grad))
-round(c(pcor = pc, se = se, lower = pc - qnorm(0.975) * se,
-        upper = pc + qnorm(0.975) * se), 3)
-#>   pcor     se  lower  upper 
-#> -0.150  0.057 -0.261 -0.039
+pcd <- mc_partial_cor_delta(fit_hunt, variability = "two_stage",
+                            method = "full", cluster = Hunting$HUNTER,
+                            small_sample = TRUE)
+round(pcd[, c("pcor", "se", "lower", "upper")], 3)
+#>    pcor    se  lower  upper
+#> 1 -0.15 0.057 -0.261 -0.039
 ```
 
 **Interpretation.** The same hunters are observed over several months,

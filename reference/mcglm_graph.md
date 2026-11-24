@@ -149,6 +149,8 @@ plot(x, type = c("network", "residuals"), ...)
   standard errors, `"model"` (default), `"empirical"` for the sandwich
   or `"two_stage"`, as in
   [`mc_vcov_graph`](https://evandeilton.github.io/mcglmgraph/reference/mc_vcov_graph.md).
+  With `"two_stage"` the correction takes the route of `method = "auto"`
+  there.
 
 - cluster, small_sample:
 

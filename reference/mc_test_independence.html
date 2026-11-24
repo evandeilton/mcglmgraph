@@ -19,7 +19,7 @@ reading requires a precision matrix fitted on the latent Gaussian scale."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">mcglmgraph</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +63,8 @@ reading requires a precision matrix fitted on the latent Gaussian scale.</p>
 <span>  robust <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  cluster <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  small_sample <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  type <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  type <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"shortcut"</span>, <span class="st">"full"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -106,6 +107,13 @@ precedence over <code>robust</code>, which must then not contradict it. The
 default <code>NULL</code> uses <code>"sandwich"</code> if <code>robust</code> is
 <code>TRUE</code> and <code>"model"</code> otherwise.</p></dd>
 
+
+<dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
+<dd><p>for <code>type = "two_stage"</code>, the route of the correction,
+<code>"auto"</code> (default), <code>"shortcut"</code> or <code>"full"</code>, as in
+<code><a href="mc_vcov_graph.html">mc_vcov_graph</a></code>. It has no meaning for the other two types and
+is refused with them when it is not <code>"auto"</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -129,8 +137,8 @@ default covariance is the model-based one, for which that reference also
 requires the working identity \(\mathbf V=\mathbf J\) (a correctly
 specified second moment and Gaussian fourth moments); <code>type =
 "sandwich"</code> does not use it, and <code>type = "two_stage"</code> also accounts for
-the estimation of the first stage. The edges tested are those of the support
-of the fit, and the
+the estimation of the first stage, by the route <code>method</code> selects. The
+edges tested are those of the support of the fit, and the
 graph is treated as fixed: for a support chosen by a search over graphs, the
 result is descriptive. It is a standalone function so that the inherited
 <code>anova.mcglm</code> method remains available on the object. The function

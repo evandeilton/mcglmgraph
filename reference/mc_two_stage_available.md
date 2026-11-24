@@ -16,11 +16,15 @@ the correlation between responses without restriction, which mcglm does
 and the check therefore does not read. The check below is that
 structural one: on a DAG with an immorality the shortcut can qualify and
 still be, for the parameters of the collider and of its descendants,
-only a first-order approximation to the reduced form, which is why
-`method = "auto"` prefers the full form there. The full form needs only
-that the first stage be a sum over units, which is what the rows are
-when the within-response structure is the identity, and what the
-clusters must be otherwise.
+only a first-order approximation to the reduced form, which is one of
+the two cases in which `method = "auto"` takes the full form when it is
+available. The other is a first stage with a variance function other
+than `"constant"`: the shortcut then rests on conditions on the mean and
+on the residual covariance that the fit does not show (see the section
+"What the check cannot verify"). The full form needs only that the first
+stage be a sum over units, which is what the rows are when the
+within-response structure is the identity, and what the clusters must be
+otherwise.
 
 ## Usage
 
@@ -39,8 +43,9 @@ mc_two_stage_available(fit, cluster = NULL)
   optional vector with one identifier per observational row, as in
   [`mc_vcov_graph`](https://evandeilton.github.io/mcglmgraph/reference/mc_vcov_graph.md);
   default `NULL`. It changes only whether the full form is available for
-  a within-response structure that is not the identity, and, on a DAG
-  with an immorality, which route `method = "auto"` takes.
+  a within-response structure that is not the identity, and with it the
+  route `method = "auto"` takes on a DAG with an immorality or on a fit
+  with a variance function other than `"constant"`.
 
 ## Value
 
@@ -48,9 +53,13 @@ A list with `shortcut_ok` (logical) and `why_shortcut` (character
 vector, empty when the shortcut applies), the verdict and the reasons
 for the shortcut; `full_ok` and `why_full`, the same for the full form;
 and `method`, a string, `"shortcut"` or `"full"`, the route
-`mc_vcov_graph(type = "two_stage")` takes by default
-(`method = "auto"`), or `NA_character_` when neither applies. The
-components `ok` and `why` repeat `shortcut_ok` and `why_shortcut`.
+`method = "auto"` takes in `mc_vcov_graph(type = "two_stage")` and in
+the functions that consume it, or `NA_character_` when neither applies.
+The shortcut can apply (`shortcut_ok = TRUE`) while `method` is
+`"full"`: `"auto"` takes the full form, when it is available, for a fit
+with a variance function other than `"constant"` and for a DAG with an
+immorality. The components `ok` and `why` repeat `shortcut_ok` and
+`why_shortcut`.
 
 ## Which fits qualify for the shortcut
 
@@ -124,6 +133,11 @@ neighboring sites remain dependent, since coordinates in the mean do not
 whiten the residuals. There the rows are not independent units, and
 neither the corrected form nor the sandwich it corrects has the variance
 it claims.
+
+Since the first two cannot be verified, and the constant variance
+function is the case that does not need the second, `method = "auto"`
+takes the full form, when it is available, for a fit in which some
+response has another variance function.
 
 ## References
 
