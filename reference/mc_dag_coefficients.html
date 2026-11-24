@@ -27,7 +27,7 @@ one."><meta property="og:image" content="https://evandeilton.github.io/mcglmgrap
 
     <a class="navbar-brand me-2" href="../index.html">mcglmgraph</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,7 @@ one."><meta property="og:image" content="https://evandeilton.github.io/mcglmgrap
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Scale-free coefficients of a fitted directed layer</h1>
-      <small class="dont-index">Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.4/R/dag_layer.R" class="external-link"><code>R/dag_layer.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.5/R/dag_layer.R" class="external-link"><code>R/dag_layer.R</code></a></small>
       <div class="d-none name"><code>mc_dag_coefficients.Rd</code></div>
     </div>
 
@@ -77,7 +77,8 @@ one.</p>
 <span>  interval <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"delta"</span>, <span class="st">"fixed_factor"</span><span class="op">)</span>,</span>
 <span>  cluster <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  small_sample <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  r2_interval <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wald"</span>, <span class="st">"logit"</span><span class="op">)</span></span>
+<span>  r2_interval <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wald"</span>, <span class="st">"logit"</span><span class="op">)</span>,</span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"shortcut"</span>, <span class="st">"full"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'mcg_dag_coef'</span></span>
@@ -95,8 +96,7 @@ one.</p>
 <dt id="arg-variability">variability<a class="anchor" aria-label="anchor" href="#arg-variability"></a></dt>
 <dd><p><code>"model"</code> for \(\mathbf J_n^{-1}\),
 <code>"empirical"</code> for the sandwich, or <code>"two_stage"</code> for the sandwich
-corrected for the estimation of the residuals, by the route
-<code>method = "auto"</code> takes in <code><a href="mc_vcov_graph.html">mc_vcov_graph</a></code>.</p></dd>
+corrected for the estimation of the residuals.</p></dd>
 
 
 <dt id="arg-level">level<a class="anchor" aria-label="anchor" href="#arg-level"></a></dt>
@@ -121,6 +121,13 @@ empirical forms.</p></dd>
 and its interval is that point.</p></dd>
 
 
+<dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
+<dd><p>for <code>variability = "two_stage"</code>, the route of the
+correction, <code>"auto"</code> (default), <code>"shortcut"</code> or <code>"full"</code>,
+as in <code><a href="mc_vcov_graph.html">mc_vcov_graph</a></code>. It has no meaning for the other two
+forms and is refused with them when it is not <code>"auto"</code>.</p></dd>
+
+
 <dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>an object of class <code>"mcg_dag_coef"</code>.</p></dd>
 
@@ -139,9 +146,11 @@ and its interval is that point.</p></dd>
   \(R^2_{j\cdot P_j}\) with its standard error and interval. The gradients
   of \(\gamma^*\) and of \(R^2\) travel in the attributes
   <code>"gradient_std"</code> and <code>"gradient_r2"</code>. The list also records
-  <code>variability</code>, <code>level</code>, <code>interval</code> and
-  <code>r2_interval</code>. The <code>print</code> method shows the main columns and
-  returns <code>x</code> invisibly.</p>
+  <code>variability</code>, <code>level</code>, <code>interval</code>,
+  <code>r2_interval</code> and <code>two_stage_method</code>, the route taken with
+  <code>variability = "two_stage"</code> and <code>NA</code> otherwise. The
+  <code>print</code> method shows the main columns and returns <code>x</code>
+  invisibly.</p>
     </div>
     <div class="section level2">
     <h2 id="what-the-coefficients-are">What the coefficients are<a class="anchor" aria-label="anchor" href="#what-the-coefficients-are"></a></h2>

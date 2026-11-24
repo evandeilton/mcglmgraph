@@ -104,9 +104,9 @@ rule other than `"standard"` (`NULL` otherwise); `ambiguous`, the
 triples left undecided, and their number `n_ambiguous`;
 `meek_iterations` and `meek_blocked`, the number of sweeps of Meek's
 rules and of orientations withheld by an ambiguous triple;
-`separation_diagnostics`, the diagnostics of the skeleton search; and
-`alpha`, `df_residual` and `response_names`. The `print` method returns
-`x` invisibly.
+`separation_diagnostics`, the diagnostics of the skeleton search, with
+the tests it skipped in `n_unusable`; and `alpha`, `df_residual` and
+`response_names`. The `print` method returns `x` invisibly.
 
 ## Which separating sets the orientation consults
 
@@ -138,11 +138,14 @@ conflict or a cycle and the output then fails the checks below.
 
 ## What the output may be called
 
-The output is submitted to seven checks, reported in `gates`: no pair of
+The output is submitted to eight checks, reported in `gates`: no pair of
 colliders or of rules required opposite directions on an edge
 (`no_orientation_conflict`); no separation test needed a ridge to invert
-its block (`unregularized_separation`); the orientation stayed within
-the learned skeleton (`orientation_within_skeleton`) and kept all of it
+its block (`unregularized_separation`); every separation test of the
+skeleton search could be formed, none being skipped as in
+[`mc_pc_skeleton`](https://evandeilton.github.io/mcglmgraph/reference/mc_pc_skeleton.md)
+(`complete_separation`); the orientation stayed within the learned
+skeleton (`orientation_within_skeleton`) and kept all of it
 (`skeleton_preserved`); the directed part has no cycle (`acyclic`);
 every collider that was written survives Meek propagation
 (`vstructures_preserved`); and a consistent DAG extension exists, by the
@@ -152,7 +155,7 @@ pass, `valid_cpdag` is `TRUE` and `label` is `"CPDAG"`, or
 knowledge oriented some edge. When any fails, `valid_cpdag` is `FALSE`
 and `label` becomes `"second-order partially directed structure"`: the
 object still records what the separations supported, but it is not
-certified as the CPDAG of a Markov equivalence class. The first two
+certified as the CPDAG of a Markov equivalence class. The first three
 checks record facts of the run and not properties of the returned graph,
 so a refused label does not establish that the output differs from the
 CPDAG of a class. A triple left ambiguous by the conservative or

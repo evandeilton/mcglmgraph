@@ -399,7 +399,7 @@ fit &lt;- <span class="f">mcglmgraph</span>(forms,
 
 <footer class="bottom">
   <span><b>mcglmgraph</b> &middot; J. E. Lopes &amp; W. H. Bonat &middot; GPL-3 &middot; built on <b>mcglm</b> (Bonat &amp; J&oslash;rgensen, 2016; Bonat, 2018)</span>
-  <span>Learn more: <span class="fn">vignette("mcglmgraph-intro")</span> &middot; mcglmgraph 0.8.4 &middot; Updated: 2026-11</span>
+  <span>Learn more: <span class="fn">vignette("mcglmgraph-intro")</span> &middot; mcglmgraph 0.8.5 &middot; Updated: 2026-11</span>
 </footer>
 </div></div>
 
@@ -495,7 +495,7 @@ lam &lt;- <span class="f">mc_select_lambda</span>(fit,
       <tr><td><span class="a">required</span>, <span class="a">forbidden</span></td><td>background arcs <span class="o">(from, to)</span>; output is then a maximally oriented PDAG</td></tr>
       <tr><td><span class="a">df_residual</span></td><td><span class="s">"auto"</span>: <span class="m">&nu;<sub>e</sub> &#8722; |S| &#8722; 2</span> if <span class="fn">mc_residual_df(fit)</span> is exact, else refused</td></tr>
     </table>
-    <p>Labeled a CPDAG only when all 7 gates pass, e.g. no collider conflict, no directed cycle, colliders survive Meek, a DAG extension exists.</p>
+    <p>Labeled a CPDAG only when all 8 gates pass, e.g. no collider conflict, no directed cycle, colliders survive Meek, a DAG extension exists.</p>
     <div class="entry"><span class="sig"><span class="fn">mc_ges</span>(fit, <span class="a">penalty</span> = NULL, <span class="a">start</span>, <span class="a">max_set</span> = 12)</span>
       <span class="d">Greedy equivalence search (Chickering), score-based and native; default log(n), 2 gives AIC. Disagreement with PC is informative.</span></div>
     <pre class="code dag">cp &lt;- <span class="f">mc_graph_pipeline</span>(fit,
@@ -598,7 +598,7 @@ bt$se; bt$ci
 
 <footer class="bottom">
   <span><b>mcglmgraph</b> &middot; J. E. Lopes &amp; W. H. Bonat &middot; GPL-3 &middot; built on <b>mcglm</b> (Bonat &amp; J&oslash;rgensen, 2016; Bonat, 2018)</span>
-  <span>Learn more: <span class="fn">vignette("mcglmgraph-intro")</span> &middot; mcglmgraph 0.8.4 &middot; Updated: 2026-11</span>
+  <span>Learn more: <span class="fn">vignette("mcglmgraph-intro")</span> &middot; mcglmgraph 0.8.5 &middot; Updated: 2026-11</span>
 </footer>
 </div></div>
 

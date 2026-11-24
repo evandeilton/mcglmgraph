@@ -118,8 +118,12 @@ by pair, it need not be the CPDAG of a DAG; `valid_prob`, the proportion
 of valid resamples whose output passed the validity gates of
 [`mc_graph_pipeline`](https://evandeilton.github.io/mcglmgraph/reference/mc_graph_pipeline.md);
 `mean_ambiguous`, the average number of ambiguous triples per valid
-resample; the counts `B`, `B_valid` and `B_failed`; the data frame
-`failures` (`replicate`, `error`); and the settings `refit`, `alpha`,
+resample; the counts `B`, `B_valid` and `B_failed`; `B_incomplete`, the
+number of valid resamples in which the skeleton search skipped a test
+that could not be formed, as in
+[`mc_pc_skeleton`](https://evandeilton.github.io/mcglmgraph/reference/mc_pc_skeleton.md),
+reported in one warning when it is not zero; the data frame `failures`
+(`replicate`, `error`); and the settings `refit`, `alpha`,
 `orient_method`, `orient_rule`, `clustered` (logical) and
 `response_names`. The `print` method shows the settings, the counts and
 the table of frequencies, and returns its argument invisibly.

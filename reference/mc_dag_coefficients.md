@@ -22,7 +22,8 @@ mc_dag_coefficients(
   interval = c("delta", "fixed_factor"),
   cluster = NULL,
   small_sample = FALSE,
-  r2_interval = c("wald", "logit")
+  r2_interval = c("wald", "logit"),
+  method = c("auto", "shortcut", "full")
 )
 
 # S3 method for class 'mcg_dag_coef'
@@ -39,8 +40,7 @@ print(x, ...)
 
   `"model"` for \\\mathbf J_n^{-1}\\, `"empirical"` for the sandwich, or
   `"two_stage"` for the sandwich corrected for the estimation of the
-  residuals, by the route `method = "auto"` takes in
-  [`mc_vcov_graph`](https://evandeilton.github.io/mcglmgraph/reference/mc_vcov_graph.md).
+  residuals.
 
 - level:
 
@@ -64,6 +64,14 @@ print(x, ...)
   that the bounds stay inside \\(0, 1)\\. A response without parents has
   \\R^2=0\\ by construction, and its interval is that point.
 
+- method:
+
+  for `variability = "two_stage"`, the route of the correction, `"auto"`
+  (default), `"shortcut"` or `"full"`, as in
+  [`mc_vcov_graph`](https://evandeilton.github.io/mcglmgraph/reference/mc_vcov_graph.md).
+  It has no meaning for the other two forms and is refused with them
+  when it is not `"auto"`.
+
 - x:
 
   an object of class `"mcg_dag_coef"`.
@@ -82,8 +90,9 @@ innovation variance and its standard error, and \\R^2\_{j\cdot P_j}\\
 with its standard error and interval. The gradients of \\\gamma^\*\\ and
 of \\R^2\\ travel in the attributes `"gradient_std"` and
 `"gradient_r2"`. The list also records `variability`, `level`,
-`interval` and `r2_interval`. The `print` method shows the main columns
-and returns `x` invisibly.
+`interval`, `r2_interval` and `two_stage_method`, the route taken with
+`variability = "two_stage"` and `NA` otherwise. The `print` method shows
+the main columns and returns `x` invisibly.
 
 ## What the coefficients are
 

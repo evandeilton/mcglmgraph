@@ -27,7 +27,7 @@ A set reachable from both neighborhoods is reported once."><meta property="og:im
 
     <a class="navbar-brand me-2" href="../index.html">mcglmgraph</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,7 @@ A set reachable from both neighborhoods is reported once."><meta property="og:im
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>All separating sets of a pair of responses</h1>
-      <small class="dont-index">Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.4/R/cpdag.R" class="external-link"><code>R/cpdag.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.5/R/cpdag.R" class="external-link"><code>R/cpdag.R</code></a></small>
       <div class="d-none name"><code>mc_separating_sets.Rd</code></div>
     </div>
 
@@ -145,8 +145,8 @@ passed to the same Fisher contract used by the skeleton.</p></dd>
   incomplete: a neighborhood of the pair is larger than <code>max_ord</code>, or
   some conditioning set gave no valid test, because its Fisher degrees of
   freedom are not positive or its block gives no valid partial correlation.
-  Such a set is skipped and counted in <code>n_unusable</code>; unlike in
-  <code><a href="mc_pc_skeleton.html">mc_pc_skeleton</a></code>, it does not stop the enumeration.
+  Such a set is skipped and counted in <code>n_unusable</code>, as in
+  <code><a href="mc_pc_skeleton.html">mc_pc_skeleton</a></code>.
   The object also records <code>alpha</code>, <code>max_ord</code>, <code>df_residual</code>
   and <code>response_names</code>, and <code>diagnostics</code> with the number of tests
   (<code>n_tests</code>), of ridge-regularized blocks (<code>n_regularized</code>), of

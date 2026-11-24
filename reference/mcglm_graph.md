@@ -37,6 +37,7 @@ summary(
   variability = c("model", "empirical", "two_stage"),
   cluster = NULL,
   small_sample = FALSE,
+  method = c("auto", "shortcut", "full"),
   ...
 )
 
@@ -149,8 +150,6 @@ plot(x, type = c("network", "residuals"), ...)
   standard errors, `"model"` (default), `"empirical"` for the sandwich
   or `"two_stage"`, as in
   [`mc_vcov_graph`](https://evandeilton.github.io/mcglmgraph/reference/mc_vcov_graph.md).
-  With `"two_stage"` the correction takes the route of `method = "auto"`
-  there.
 
 - cluster, small_sample:
 
@@ -158,6 +157,14 @@ plot(x, type = c("network", "residuals"), ...)
   [`mc_vcov_graph`](https://evandeilton.github.io/mcglmgraph/reference/mc_vcov_graph.md);
   they apply to `variability = "empirical"` and `"two_stage"` only and
   are refused with `"model"`.
+
+- method:
+
+  for `summary` with `variability = "two_stage"`: the route of the
+  correction, `"auto"` (default), `"shortcut"` or `"full"`, as in
+  [`mc_vcov_graph`](https://evandeilton.github.io/mcglmgraph/reference/mc_vcov_graph.md).
+  It has no meaning for the other two forms and is refused with them
+  when it is not `"auto"`.
 
 - type:
 
@@ -316,7 +323,9 @@ for the corrected forms.
   criteria). Returns an object of class `"summary.mcglm_graph"`, a list
   with the first-stage summary in `first_stage` and its printed lines in
   `first_stage_text`; `layer`, `R`, `n` and `n_edges`; `converged`,
-  `status` and `inference_ok`; the `variability` used; the data frame
+  `status` and `inference_ok`; the `variability` used and, with
+  `"two_stage"`, the route taken in `two_stage_method` (`NA` otherwise,
+  and when the fit is not certified for inference); the data frame
   `coefficients` of the graph parameters, with columns `Estimate`,
   `Std.Error`, `z` (their ratio) and `p.value` (two-sided, standard
   normal reference, for the null value zero of each parameter taken

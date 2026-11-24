@@ -13,7 +13,7 @@ sandwich corrected for the estimation of the first stage."><meta property="og:im
 
     <a class="navbar-brand me-2" href="../index.html">mcglmgraph</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,7 +36,7 @@ sandwich corrected for the estimation of the first stage."><meta property="og:im
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Covariance matrix of the graph-layer parameters</h1>
-      <small class="dont-index">Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.4/R/methods.R" class="external-link"><code>R/methods.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.5/R/methods.R" class="external-link"><code>R/methods.R</code></a></small>
       <div class="d-none name"><code>mc_vcov_graph.Rd</code></div>
     </div>
 
@@ -103,7 +103,9 @@ first stage and is slower. It has no meaning for the other two types.</p></dd>
 <dt id="arg-sensitivity">sensitivity<a class="anchor" aria-label="anchor" href="#arg-sensitivity"></a></dt>
 <dd><p>for the full form, <code>"observed"</code> (default) or
 <code>"expected"</code>, the sensitivity of the first stage described in the
-section "The full form".</p></dd>
+section "The full form". The shortcut and the other two types do not use
+it: <code>"expected"</code> is refused with them, and gives a warning when
+<code>method = "auto"</code> takes the shortcut.</p></dd>
 
 </dl></div>
     <div class="section level2">

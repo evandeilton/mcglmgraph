@@ -93,14 +93,13 @@ when its collection may be incomplete: a neighborhood of the pair is
 larger than `max_ord`, or some conditioning set gave no valid test,
 because its Fisher degrees of freedom are not positive or its block
 gives no valid partial correlation. Such a set is skipped and counted in
-`n_unusable`; unlike in
-[`mc_pc_skeleton`](https://evandeilton.github.io/mcglmgraph/reference/mc_pc_skeleton.md),
-it does not stop the enumeration. The object also records `alpha`,
-`max_ord`, `df_residual` and `response_names`, and `diagnostics` with
-the number of tests (`n_tests`), of ridge-regularized blocks
-(`n_regularized`), of unusable blocks (`n_unusable`), the largest ridge
-(`max_ridge`) and the Fisher contract (`df_contract`). The `print`
-method returns `x` invisibly.
+`n_unusable`, as in
+[`mc_pc_skeleton`](https://evandeilton.github.io/mcglmgraph/reference/mc_pc_skeleton.md).
+The object also records `alpha`, `max_ord`, `df_residual` and
+`response_names`, and `diagnostics` with the number of tests
+(`n_tests`), of ridge-regularized blocks (`n_regularized`), of unusable
+blocks (`n_unusable`), the largest ridge (`max_ridge`) and the Fisher
+contract (`df_contract`). The `print` method returns `x` invisibly.
 
 ## Why the collection is informative on its own
 

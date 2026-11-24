@@ -17,7 +17,7 @@ factorization)."><meta property="og:image" content="https://evandeilton.github.i
 
     <a class="navbar-brand me-2" href="../index.html">mcglmgraph</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,7 @@ factorization)."><meta property="og:image" content="https://evandeilton.github.i
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Fit a graph-structured multivariate covariance generalized linear model</h1>
-      <small class="dont-index">Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.4/R/mcglm_graph.R" class="external-link"><code>R/mcglm_graph.R</code></a>, <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.4/R/methods.R" class="external-link"><code>R/methods.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.5/R/mcglm_graph.R" class="external-link"><code>R/mcglm_graph.R</code></a>, <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.5/R/methods.R" class="external-link"><code>R/methods.R</code></a></small>
       <div class="d-none name"><code>mcglm_graph.Rd</code></div>
     </div>
 
@@ -82,6 +82,7 @@ factorization).</p>
 <span>  variability <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"model"</span>, <span class="st">"empirical"</span>, <span class="st">"two_stage"</span><span class="op">)</span>,</span>
 <span>  cluster <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  small_sample <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"shortcut"</span>, <span class="st">"full"</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -190,8 +191,7 @@ mcglm method by <code>summary</code> and <code>coef</code>; passed to
 <dd><p>for <code>summary</code>: the covariance of the graph
 parameters behind the standard errors, <code>"model"</code> (default),
 <code>"empirical"</code> for the sandwich or <code>"two_stage"</code>, as in
-<code><a href="mc_vcov_graph.html">mc_vcov_graph</a></code>. With <code>"two_stage"</code> the correction takes
-the route of <code>method = "auto"</code> there.</p></dd>
+<code><a href="mc_vcov_graph.html">mc_vcov_graph</a></code>.</p></dd>
 
 
 <dt id="arg-cluster-small-sample">cluster, small_sample<a class="anchor" aria-label="anchor" href="#arg-cluster-small-sample"></a></dt>
@@ -199,6 +199,14 @@ the route of <code>method = "auto"</code> there.</p></dd>
 <code><a href="mc_vcov_graph.html">mc_vcov_graph</a></code>; they apply to <code>variability =
 "empirical"</code> and <code>"two_stage"</code> only and are refused with
 <code>"model"</code>.</p></dd>
+
+
+<dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
+<dd><p>for <code>summary</code> with <code>variability = "two_stage"</code>:
+the route of the correction, <code>"auto"</code> (default), <code>"shortcut"</code>
+or <code>"full"</code>, as in <code><a href="mc_vcov_graph.html">mc_vcov_graph</a></code>. It has no meaning
+for the other two forms and is refused with them when it is not
+<code>"auto"</code>.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
@@ -349,7 +357,10 @@ Returns an object of class <code>"summary.mcglm_graph"</code>, a list with the
 first-stage summary in <code>first_stage</code> and its printed lines in
 <code>first_stage_text</code>; <code>layer</code>, <code>R</code>, <code>n</code> and
 <code>n_edges</code>; <code>converged</code>, <code>status</code> and
-<code>inference_ok</code>; the <code>variability</code> used; the data frame
+<code>inference_ok</code>; the <code>variability</code> used and, with
+<code>"two_stage"</code>, the route taken in <code>two_stage_method</code>
+(<code>NA</code> otherwise, and when the fit is not certified for inference);
+the data frame
 <code>coefficients</code> of the graph parameters, with columns
 <code>Estimate</code>, <code>Std.Error</code>, <code>z</code> (their ratio) and
 <code>p.value</code> (two-sided, standard normal reference, for the null value

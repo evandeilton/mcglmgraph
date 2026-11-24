@@ -34,7 +34,8 @@ mc_find_vstructures(
 
   maximum conditioning order passed to
   [`mc_pc_skeleton`](https://evandeilton.github.io/mcglmgraph/reference/mc_pc_skeleton.md)
-  and to the enumeration of separating sets.
+  and to the enumeration of separating sets. A test the skeleton search
+  cannot form is skipped with the warning described there.
 
 - df_residual:
 

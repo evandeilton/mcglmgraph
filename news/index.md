@@ -1,5 +1,35 @@
 # Changelog
 
+## mcglmgraph 0.8.5
+
+- [`summary()`](https://rdrr.io/r/base/summary.html) of a fit and
+  [`mc_dag_coefficients()`](https://evandeilton.github.io/mcglmgraph/reference/mc_dag_coefficients.md)
+  take `method`, the route of the two-stage correction, and report the
+  route taken in `two_stage_method`.
+- [`mc_wald_graph()`](https://evandeilton.github.io/mcglmgraph/reference/mc_wald_graph.md)
+  and
+  [`mc_test_adequacy()`](https://evandeilton.github.io/mcglmgraph/reference/mc_test_adequacy.md)
+  refuse a `method` other than `"auto"` when `type` is not
+  `"two_stage"`, as
+  [`mc_vcov_graph()`](https://evandeilton.github.io/mcglmgraph/reference/mc_vcov_graph.md)
+  does.
+- [`mc_vcov_graph()`](https://evandeilton.github.io/mcglmgraph/reference/mc_vcov_graph.md):
+  `sensitivity = "expected"` is refused where it has no effect, with
+  `type` other than `"two_stage"` or with `method = "shortcut"`, and
+  gives a warning when `method = "auto"` takes the shortcut.
+- [`mc_pc_skeleton()`](https://evandeilton.github.io/mcglmgraph/reference/mc_pc_skeleton.md)
+  skips a conditioning set that gives no valid test, as
+  [`mc_separating_sets()`](https://evandeilton.github.io/mcglmgraph/reference/mc_separating_sets.md)
+  does, instead of stopping: the set removes no edge, and the skipped
+  tests are counted in `diagnostics$n_unusable` and reported in one
+  warning of class `"mcg_unusable_tests"`.
+- [`mc_graph_pipeline()`](https://evandeilton.github.io/mcglmgraph/reference/mc_graph_pipeline.md)
+  has the gate `complete_separation`, which fails when the skeleton
+  search skipped a test, so such an output is not labeled a CPDAG.
+  [`mc_cpdag_stability()`](https://evandeilton.github.io/mcglmgraph/reference/mc_cpdag_stability.md)
+  counts those resamples in `B_incomplete` and reports them in one
+  warning.
+
 ## mcglmgraph 0.8.4
 
 - [`mc_test_independence()`](https://evandeilton.github.io/mcglmgraph/reference/mc_test_independence.md)

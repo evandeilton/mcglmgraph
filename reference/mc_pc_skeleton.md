@@ -53,8 +53,13 @@ vector of nodes that separated \\i\\ from \\j\\, `integer(0)` for the
 empty set, and `NULL` when the pair was never separated; the
 `df_residual` used; and `diagnostics`, a list with the number of tests
 (`n_tests`), the number of ridge-regularized blocks (`n_regularized`),
-the largest ridge (`max_ridge`), the smallest Fisher degrees of freedom
-(`min_df`) and the contract used (`df_contract`).
+the number of tests that could not be formed (`n_unusable`, included in
+`n_tests`), the largest ridge (`max_ridge`), the smallest Fisher degrees
+of freedom among the valid tests (`min_df`) and the contract used
+(`df_contract`). The search visits a pair from each of its two
+responses, so a conditioning set common to both neighborhoods enters
+these counts twice. The two counts are integers, and doubles when they
+exceed the integer range.
 
 ## The test
 
@@ -67,16 +72,20 @@ given), so that a perfectly collinear block gives a large but finite
 statistic. A pair is declared conditionally uncorrelated, and its edge
 removed, when the two-sided normal p-value of \\z\\ is at least `alpha`.
 A block that is nearly singular is inverted after a ridge of \\10^{-8}\\
-times its scale and the event is counted in `diagnostics`; a
-conditioning order whose Fisher degrees of freedom are not positive, or
-a block that gives no valid partial correlation even after the ridge, is
-an error. Because `Sigma` is usually computed from the estimated
-residuals of responses that need not be Gaussian, the normal reference
-for \\z\\ is a working asymptotic calibration and not an exact one. The
-factor takes `n` as the number of independent units, the rows of the
-data for a fit with an identity within-response structure. There is no
-`cluster` argument: with dependent rows, `n` overstates the information
-and the test is anti-conservative.
+times its scale and the event is counted in `diagnostics`. A
+conditioning set whose Fisher degrees of freedom are not positive, or
+whose block gives no valid partial correlation even after the ridge,
+gives no test: it is skipped, as in
+[`mc_separating_sets`](https://evandeilton.github.io/mcglmgraph/reference/mc_separating_sets.md),
+so it removes no edge, and the skipped tests are counted in `n_unusable`
+and reported in one warning of class `"mcg_unusable_tests"`. Because
+`Sigma` is usually computed from the estimated residuals of responses
+that need not be Gaussian, the normal reference for \\z\\ is a working
+asymptotic calibration and not an exact one. The factor takes `n` as the
+number of independent units, the rows of the data for a fit with an
+identity within-response structure. There is no `cluster` argument: with
+dependent rows, `n` overstates the information and the test is
+anti-conservative.
 
 ## References
 

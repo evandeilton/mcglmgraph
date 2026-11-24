@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mcglmgraph</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,9 +30,22 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.4/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.5/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.8.5" id="mcglmgraph-085">mcglmgraph 0.8.5<a class="anchor" aria-label="anchor" href="#mcglmgraph-085"></a></h2>
+<ul><li>
+<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> of a fit and <code><a href="../reference/mc_dag_coefficients.html">mc_dag_coefficients()</a></code> take <code>method</code>, the route of the two-stage correction, and report the route taken in <code>two_stage_method</code>.</li>
+<li>
+<code><a href="../reference/mc_wald_graph.html">mc_wald_graph()</a></code> and <code><a href="../reference/mc_test_adequacy.html">mc_test_adequacy()</a></code> refuse a <code>method</code> other than <code>"auto"</code> when <code>type</code> is not <code>"two_stage"</code>, as <code><a href="../reference/mc_vcov_graph.html">mc_vcov_graph()</a></code> does.</li>
+<li>
+<code><a href="../reference/mc_vcov_graph.html">mc_vcov_graph()</a></code>: <code>sensitivity = "expected"</code> is refused where it has no effect, with <code>type</code> other than <code>"two_stage"</code> or with <code>method = "shortcut"</code>, and gives a warning when <code>method = "auto"</code> takes the shortcut.</li>
+<li>
+<code><a href="../reference/mc_pc_skeleton.html">mc_pc_skeleton()</a></code> skips a conditioning set that gives no valid test, as <code><a href="../reference/mc_separating_sets.html">mc_separating_sets()</a></code> does, instead of stopping: the set removes no edge, and the skipped tests are counted in <code>diagnostics$n_unusable</code> and reported in one warning of class <code>"mcg_unusable_tests"</code>.</li>
+<li>
+<code><a href="../reference/mc_graph_pipeline.html">mc_graph_pipeline()</a></code> has the gate <code>complete_separation</code>, which fails when the skeleton search skipped a test, so such an output is not labeled a CPDAG. <code><a href="../reference/mc_cpdag_stability.html">mc_cpdag_stability()</a></code> counts those resamples in <code>B_incomplete</code> and reports them in one warning.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.8.4" id="mcglmgraph-084">mcglmgraph 0.8.4<a class="anchor" aria-label="anchor" href="#mcglmgraph-084"></a></h2>
 <ul><li>

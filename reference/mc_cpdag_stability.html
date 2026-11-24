@@ -15,7 +15,7 @@ whose two directions split the frequency, which a single run cannot reveal."><me
 
     <a class="navbar-brand me-2" href="../index.html">mcglmgraph</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,7 @@ whose two directions split the frequency, which a single run cannot reveal."><me
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Resampling frequencies of the skeleton and of each orientation</h1>
-      <small class="dont-index">Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.4/R/bootstrap.R" class="external-link"><code>R/bootstrap.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.5/R/bootstrap.R" class="external-link"><code>R/bootstrap.R</code></a></small>
       <div class="d-none name"><code>mc_cpdag_stability.Rd</code></div>
     </div>
 
@@ -162,7 +162,11 @@ in the parent, so a given seed yields the same ones at any worker count.</p></dd
   <code>valid_prob</code>, the proportion of valid resamples whose output passed
   the validity gates of <code><a href="mc_graph_pipeline.html">mc_graph_pipeline</a></code>;
   <code>mean_ambiguous</code>, the average number of ambiguous triples per valid
-  resample; the counts <code>B</code>, <code>B_valid</code> and <code>B_failed</code>; the
+  resample; the counts <code>B</code>, <code>B_valid</code> and <code>B_failed</code>;
+  <code>B_incomplete</code>, the number of valid resamples in which the skeleton
+  search skipped a test that could not be formed, as in
+  <code><a href="mc_pc_skeleton.html">mc_pc_skeleton</a></code>, reported in one warning when it is not
+  zero; the
   data frame <code>failures</code> (<code>replicate</code>, <code>error</code>); and the
   settings <code>refit</code>, <code>alpha</code>, <code>orient_method</code>,
   <code>orient_rule</code>, <code>clustered</code> (logical) and

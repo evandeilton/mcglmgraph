@@ -23,7 +23,7 @@ Scheines, 2000; Kalisch and Buehlmann, 2007)."><meta property="og:image" content
 
     <a class="navbar-brand me-2" href="../index.html">mcglmgraph</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,7 @@ Scheines, 2000; Kalisch and Buehlmann, 2007)."><meta property="og:image" content
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>PC-style skeleton with separating sets</h1>
-      <small class="dont-index">Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.4/R/cpdag.R" class="external-link"><code>R/cpdag.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.5/R/cpdag.R" class="external-link"><code>R/cpdag.R</code></a></small>
       <div class="d-none name"><code>mc_pc_skeleton.Rd</code></div>
     </div>
 
@@ -107,9 +107,14 @@ first-stage fit, as a number or as the result of
   <code>NULL</code> when the pair was never separated; the <code>df_residual</code>
   used; and <code>diagnostics</code>, a list with the number of tests
   (<code>n_tests</code>), the number of ridge-regularized blocks
-  (<code>n_regularized</code>), the largest ridge (<code>max_ridge</code>), the smallest
-  Fisher degrees of freedom (<code>min_df</code>) and the contract used
-  (<code>df_contract</code>).</p>
+  (<code>n_regularized</code>), the number of tests that could not be formed
+  (<code>n_unusable</code>, included in <code>n_tests</code>), the largest ridge
+  (<code>max_ridge</code>), the smallest Fisher degrees of freedom among the
+  valid tests (<code>min_df</code>) and the contract used (<code>df_contract</code>).
+  The search visits a pair from each of its two responses, so a
+  conditioning set common to both neighborhoods enters these counts twice.
+  The two counts are integers, and doubles when they exceed the integer
+  range.</p>
     </div>
     <div class="section level2">
     <h2 id="the-test">The test<a class="anchor" aria-label="anchor" href="#the-test"></a></h2>
@@ -125,10 +130,13 @@ statistic. A pair is declared conditionally uncorrelated, and its edge
 removed, when the two-sided normal p-value of \(z\) is at least
 <code>alpha</code>. A block that is nearly singular is inverted after a ridge of
 \(10^{-8}\) times its scale and the event is counted in
-<code>diagnostics</code>; a conditioning order whose Fisher degrees of freedom are
-not positive, or a block that gives no valid partial correlation even after
-the ridge, is an error. Because <code>Sigma</code> is usually computed from the
-estimated residuals of responses that need not be Gaussian, the normal
+<code>diagnostics</code>. A conditioning set whose Fisher degrees of freedom are
+not positive, or whose block gives no valid partial correlation even after
+the ridge, gives no test: it is skipped, as in
+<code><a href="mc_separating_sets.html">mc_separating_sets</a></code>, so it removes no edge, and the skipped
+tests are counted in <code>n_unusable</code> and reported in one warning of class
+<code>"mcg_unusable_tests"</code>. Because <code>Sigma</code> is usually computed from
+the estimated residuals of responses that need not be Gaussian, the normal
 reference for \(z\) is a working asymptotic calibration and not an exact
 one. The factor takes
 <code>n</code> as the number of independent units, the rows of the data for a fit

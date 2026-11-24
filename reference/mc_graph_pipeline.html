@@ -31,7 +31,7 @@ a pure orientation of a fixed skeleton."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">mcglmgraph</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,7 @@ a pure orientation of a fixed skeleton."><meta property="og:image" content="http
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Constraint-based CPDAG discovery</h1>
-      <small class="dont-index">Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.4/R/cpdag.R" class="external-link"><code>R/cpdag.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/v0.8.5/R/cpdag.R" class="external-link"><code>R/cpdag.R</code></a></small>
       <div class="d-none name"><code>mc_graph_pipeline.Rd</code></div>
     </div>
 
@@ -164,7 +164,8 @@ fit for which it is not exact.</p></dd>
   left undecided, and their number <code>n_ambiguous</code>;
   <code>meek_iterations</code> and <code>meek_blocked</code>, the number of sweeps of
   Meek's rules and of orientations withheld by an ambiguous triple;
-  <code>separation_diagnostics</code>, the diagnostics of the skeleton search; and
+  <code>separation_diagnostics</code>, the diagnostics of the skeleton search,
+  with the tests it skipped in <code>n_unusable</code>; and
   <code>alpha</code>, <code>df_residual</code> and <code>response_names</code>. The
   <code>print</code> method returns <code>x</code> invisibly.</p>
     </div>
@@ -204,10 +205,13 @@ fails the checks below.</p>
     <h2 id="what-the-output-may-be-called">What the output may be called<a class="anchor" aria-label="anchor" href="#what-the-output-may-be-called"></a></h2>
 
 
-<p>The output is submitted to seven checks, reported in <code>gates</code>: no pair
+<p>The output is submitted to eight checks, reported in <code>gates</code>: no pair
 of colliders or of rules required opposite directions on an edge
 (<code>no_orientation_conflict</code>); no separation test needed a ridge to
-invert its block (<code>unregularized_separation</code>); the orientation stayed
+invert its block (<code>unregularized_separation</code>); every separation test
+of the skeleton search could be formed, none being skipped as in
+<code><a href="mc_pc_skeleton.html">mc_pc_skeleton</a></code> (<code>complete_separation</code>); the orientation
+stayed
 within the learned skeleton (<code>orientation_within_skeleton</code>) and kept
 all of it (<code>skeleton_preserved</code>); the directed part has no cycle
 (<code>acyclic</code>); every collider that was written survives Meek propagation
@@ -219,7 +223,7 @@ knowledge"</code> when the knowledge oriented some edge. When any fails,
 <code>valid_cpdag</code> is <code>FALSE</code> and <code>label</code> becomes
 <code>"second-order partially directed structure"</code>: the object still records
 what the separations supported, but it is not certified as the CPDAG of a
-Markov equivalence class. The first two checks record facts of the run and
+Markov equivalence class. The first three checks record facts of the run and
 not properties of the returned graph, so a refused label does not establish
 that the output differs from the CPDAG of a class. A triple left ambiguous
 by the conservative or majority rule stays unoriented, so a certified output

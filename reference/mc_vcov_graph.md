@@ -60,7 +60,9 @@ mc_vcov_graph(
 
   for the full form, `"observed"` (default) or `"expected"`, the
   sensitivity of the first stage described in the section "The full
-  form".
+  form". The shortcut and the other two types do not use it:
+  `"expected"` is refused with them, and gives a warning when
+  `method = "auto"` takes the shortcut.
 
 ## Value
 
