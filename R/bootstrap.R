@@ -488,7 +488,11 @@ print.mcg_bootstrap <- function(x, ...) {
 #'   \code{valid_prob}, the proportion of valid resamples whose output passed
 #'   the validity gates of \code{\link{mc_graph_pipeline}};
 #'   \code{mean_ambiguous}, the average number of ambiguous triples per valid
-#'   resample; the counts \code{B}, \code{B_valid} and \code{B_failed}; the
+#'   resample; the counts \code{B}, \code{B_valid} and \code{B_failed};
+#'   \code{B_incomplete}, the number of valid resamples in which the skeleton
+#'   search skipped a test that could not be formed, as in
+#'   \code{\link{mc_pc_skeleton}}, reported in one warning when it is not
+#'   zero; the
 #'   data frame \code{failures} (\code{replicate}, \code{error}); and the
 #'   settings \code{refit}, \code{alpha}, \code{orient_method},
 #'   \code{orient_rule}, \code{clustered} (logical) and
@@ -560,11 +564,15 @@ mc_cpdag_stability <- function(fit, B = 100L, alpha = 0.05,
     out <- tryCatch({
       f <- .refit_on_rows(fit, draws[[b]]$rows, refit, spec, ctrl,
                           blocks = draws[[b]]$blocks)
-      cp <- mc_graph_pipeline(f, alpha = alpha, orient_method = orient_method,
-                              orient_rule = orient_rule, required = required,
-                              forbidden = forbidden, max_ord = max_ord,
-                              df_residual = df_residual)
+      # skipped separation tests are reported once, for the whole run
+      cp <- withCallingHandlers(
+        mc_graph_pipeline(f, alpha = alpha, orient_method = orient_method,
+                          orient_rule = orient_rule, required = required,
+                          forbidden = forbidden, max_ord = max_ord,
+                          df_residual = df_residual),
+        mcg_unusable_tests = function(w) invokeRestart("muffleWarning"))
       list(state = .pair_states(cp$cpdag), valid = isTRUE(cp$valid_cpdag),
+           incomplete = isTRUE(cp$separation_diagnostics$n_unusable > 0),
            amb = if (is.null(cp$n_ambiguous)) 0L else cp$n_ambiguous)
     }, error = function(e) { err <<- conditionMessage(e); NULL })
     if (is.null(out)) return(list(ok = FALSE, error = err))
@@ -575,7 +583,7 @@ mc_cpdag_stability <- function(fit, B = 100L, alpha = 0.05,
 
   pairs <- t(utils::combn(R, 2L))
   counts <- matrix(0L, nrow(pairs), 4L)
-  n_valid <- 0L; n_amb <- 0; B_valid <- 0L
+  n_valid <- 0L; n_amb <- 0; B_valid <- 0L; B_incomplete <- 0L
   failures <- data.frame(replicate = integer(), error = character(),
                          stringsAsFactors = FALSE)
   for (b in seq_len(B)) {
@@ -592,11 +600,18 @@ mc_cpdag_stability <- function(fit, B = 100L, alpha = 0.05,
       counts[cbind(seq_len(nrow(pairs)), z$state)] + 1L
     n_valid <- n_valid + as.integer(z$valid)
     n_amb <- n_amb + z$amb
+    B_incomplete <- B_incomplete + as.integer(isTRUE(z$incomplete))
   }
   if (B_valid < 1L)
     stop("no resample produced a usable structure; the first failure reads: ",
          if (nrow(failures)) failures$error[1L] else "no diagnosis available",
          call. = FALSE)
+
+  if (B_incomplete > 0L)
+    warning("in ", B_incomplete, " of ", B_valid, " valid resamples some ",
+            "tests of conditional association could not be formed and were ",
+            "skipped; those outputs do not pass the validity gates.",
+            call. = FALSE)
 
   prob <- counts / B_valid
   states <- data.frame(
@@ -622,7 +637,8 @@ mc_cpdag_stability <- function(fit, B = 100L, alpha = 0.05,
   structure(list(
     states = states, edge_prob = edge_prob, consensus = consensus,
     valid_prob = n_valid / B_valid, mean_ambiguous = n_amb / B_valid,
-    B = B, B_valid = B_valid, B_failed = B - B_valid, failures = failures,
+    B = B, B_valid = B_valid, B_failed = B - B_valid,
+    B_incomplete = B_incomplete, failures = failures,
     refit = refit, alpha = alpha, orient_method = orient_method,
     orient_rule = orient_rule, clustered = !is.null(cluster),
     response_names = rn
@@ -641,6 +657,9 @@ print.mcg_cpdag_stability <- function(x, ...) {
                 "rows resampled, both stages refitted" else
                   "residuals resampled, first stage held fixed",
               x$B_valid, x$B_failed))
+  if (isTRUE(x$B_incomplete > 0L))
+    cat(sprintf("Valid resamples with skipped separation tests: %d\n",
+                x$B_incomplete))
   cat(sprintf("Outputs passing the validity gates: %.0f%%",
               100 * x$valid_prob))
   if (x$mean_ambiguous > 0)

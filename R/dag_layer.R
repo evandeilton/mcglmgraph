@@ -489,8 +489,7 @@ mc_dag_sensitivity <- function(Sigma_b, delta, n, R, edges = NULL) {
 #' @param fit an object of class \code{"mcglm_graph"} fitted with the DAG layer.
 #' @param variability \code{"model"} for \eqn{\mathbf J_n^{-1}},
 #'   \code{"empirical"} for the sandwich, or \code{"two_stage"} for the sandwich
-#'   corrected for the estimation of the residuals, by the route
-#'   \code{method = "auto"} takes in \code{\link{mc_vcov_graph}}.
+#'   corrected for the estimation of the residuals.
 #' @param level confidence level of the intervals.
 #' @param interval \code{"delta"} (default) or \code{"fixed_factor"}, the
 #'   interval for \eqn{\gamma^*} as described above.
@@ -501,6 +500,10 @@ mc_dag_sensitivity <- function(Sigma_b, delta, n, R, edges = NULL) {
 #'   \eqn{\log\{R^2/(1-R^2)\}} and mapped back, so that the bounds stay inside
 #'   \eqn{(0, 1)}. A response without parents has \eqn{R^2=0} by construction,
 #'   and its interval is that point.
+#' @param method for \code{variability = "two_stage"}, the route of the
+#'   correction, \code{"auto"} (default), \code{"shortcut"} or \code{"full"},
+#'   as in \code{\link{mc_vcov_graph}}. It has no meaning for the other two
+#'   forms and is refused with them when it is not \code{"auto"}.
 #' @return An object of class \code{"mcg_dag_coef"}: a list with \code{edges},
 #'   one row per directed edge with the raw and standardized coefficient, the
 #'   standard error of each, the Wald statistic of the raw coefficient, its
@@ -509,9 +512,11 @@ mc_dag_sensitivity <- function(Sigma_b, delta, n, R, edges = NULL) {
 #'   \eqn{R^2_{j\cdot P_j}} with its standard error and interval. The gradients
 #'   of \eqn{\gamma^*} and of \eqn{R^2} travel in the attributes
 #'   \code{"gradient_std"} and \code{"gradient_r2"}. The list also records
-#'   \code{variability}, \code{level}, \code{interval} and
-#'   \code{r2_interval}. The \code{print} method shows the main columns and
-#'   returns \code{x} invisibly.
+#'   \code{variability}, \code{level}, \code{interval},
+#'   \code{r2_interval} and \code{two_stage_method}, the route taken with
+#'   \code{variability = "two_stage"} and \code{NA} otherwise. The
+#'   \code{print} method shows the main columns and returns \code{x}
+#'   invisibly.
 #' @seealso \code{\link{mc_vcov_graph}}, \code{\link{mc_dag_unit_diagonal}}
 #' @family directed layer
 #' @examples
@@ -530,11 +535,17 @@ mc_dag_coefficients <- function(fit,
                                 level = 0.95,
                                 interval = c("delta", "fixed_factor"),
                                 cluster = NULL, small_sample = FALSE,
-                                r2_interval = c("wald", "logit")) {
+                                r2_interval = c("wald", "logit"),
+                                method = c("auto", "shortcut", "full")) {
   stopifnot(inherits(fit, "mcglm_graph"))
   variability <- match.arg(variability)
   interval <- match.arg(interval)
   r2_interval <- match.arg(r2_interval)
+  method <- match.arg(method)
+  # The route applies to the two-stage variability only.
+  if (variability != "two_stage" && method != "auto")
+    stop("method chooses the route of variability = \"two_stage\" and has ",
+         "no meaning for variability = \"", variability, "\".", call. = FALSE)
   if (length(level) != 1L || !is.finite(level) || level <= 0 || level >= 1)
     stop("level must be a single number strictly between 0 and 1.",
          call. = FALSE)
@@ -543,10 +554,13 @@ mc_dag_coefficients <- function(fit,
     stop("mc_dag_coefficients() applies to a DAG layer; this fit carries a ",
          toupper(g$type), " layer.", call. = FALSE)
 
-  V <- as.matrix(mc_vcov_graph(
+  V <- mc_vcov_graph(
     fit, type = switch(variability, model = "model", empirical = "sandwich",
                        two_stage = "two_stage"),
-    cluster = cluster, small_sample = small_sample))
+    cluster = cluster, small_sample = small_sample, method = method)
+  route <- if (variability == "two_stage")
+    attr(V, "two_stage_method", exact = TRUE) else NA_character_
+  V <- as.matrix(V)
   se_all <- sqrt(pmax(diag(V), 0))
   R <- g$R
   rn <- g$response_names
@@ -641,7 +655,8 @@ mc_dag_coefficients <- function(fit,
 
   structure(list(edges = edges_df, nodes = nodes_df,
                  variability = variability, level = level,
-                 interval = interval, r2_interval = r2_interval),
+                 interval = interval, r2_interval = r2_interval,
+                 two_stage_method = route),
             gradient_std = Gs, gradient_r2 = Gr,
             class = "mcg_dag_coef")
 }
@@ -651,8 +666,12 @@ mc_dag_coefficients <- function(fit,
 #' @param ... ignored.
 #' @export
 print.mcg_dag_coef <- function(x, ...) {
-  cat(sprintf("Directed layer (%s variability, level %.2f)\n",
-              x$variability, x$level))
+  route <- x$two_stage_method
+  cat(sprintf("Directed layer (%s variability%s, level %.2f)\n",
+              x$variability,
+              if (!is.null(route) && !is.na(route))
+                paste0(", ", route, " form") else "",
+              x$level))
   cat("\nEdges (parent -> child):\n")
   if (nrow(x$edges)) {
     show <- x$edges[, c("parent", "child", "gamma", "gamma_std", "se",

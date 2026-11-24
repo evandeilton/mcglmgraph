@@ -40,7 +40,10 @@ print.mcglm_graph <- function(x, ...) {
 #'   first-stage summary in \code{first_stage} and its printed lines in
 #'   \code{first_stage_text}; \code{layer}, \code{R}, \code{n} and
 #'   \code{n_edges}; \code{converged}, \code{status} and
-#'   \code{inference_ok}; the \code{variability} used; the data frame
+#'   \code{inference_ok}; the \code{variability} used and, with
+#'   \code{"two_stage"}, the route taken in \code{two_stage_method}
+#'   (\code{NA} otherwise, and when the fit is not certified for inference);
+#'   the data frame
 #'   \code{coefficients} of the graph parameters, with columns
 #'   \code{Estimate}, \code{Std.Error}, \code{z} (their ratio) and
 #'   \code{p.value} (two-sided, standard normal reference, for the null value
@@ -53,8 +56,12 @@ print.mcglm_graph <- function(x, ...) {
 #' @param variability for \code{summary}: the covariance of the graph
 #'   parameters behind the standard errors, \code{"model"} (default),
 #'   \code{"empirical"} for the sandwich or \code{"two_stage"}, as in
-#'   \code{\link{mc_vcov_graph}}. With \code{"two_stage"} the correction takes
-#'   the route of \code{method = "auto"} there.
+#'   \code{\link{mc_vcov_graph}}.
+#' @param method for \code{summary} with \code{variability = "two_stage"}:
+#'   the route of the correction, \code{"auto"} (default), \code{"shortcut"}
+#'   or \code{"full"}, as in \code{\link{mc_vcov_graph}}. It has no meaning
+#'   for the other two forms and is refused with them when it is not
+#'   \code{"auto"}.
 #' @param cluster,small_sample for \code{summary}: passed to
 #'   \code{\link{mc_vcov_graph}}; they apply to \code{variability =
 #'   "empirical"} and \code{"two_stage"} only and are refused with
@@ -63,8 +70,14 @@ print.mcglm_graph <- function(x, ...) {
 summary.mcglm_graph <- function(object,
                                 variability = c("model", "empirical",
                                                 "two_stage"),
-                                cluster = NULL, small_sample = FALSE, ...) {
+                                cluster = NULL, small_sample = FALSE,
+                                method = c("auto", "shortcut", "full"), ...) {
   variability <- match.arg(variability)
+  method <- match.arg(method)
+  # The route applies to the two-stage variability only.
+  if (variability != "two_stage" && method != "auto")
+    stop("method chooses the route of variability = \"two_stage\" and has ",
+         "no meaning for variability = \"", variability, "\".", call. = FALSE)
   g <- object$graph
   # The mcglm summary prints as it computes; its lines are kept for the print
   # method. A failure there is reported, never hidden.
@@ -80,6 +93,7 @@ summary.mcglm_graph <- function(object,
     txt <- character(0)
   }
   pp <- g$par
+  route <- NA_character_
   if (isFALSE(g$inference_ok)) {
     tab <- data.frame(Estimate = pp, Std.Error = NA_real_, z = NA_real_,
                       p.value = NA_real_)
@@ -87,7 +101,10 @@ summary.mcglm_graph <- function(object,
     V <- mc_vcov_graph(object, type = switch(variability, model = "model",
                                              empirical = "sandwich",
                                              two_stage = "two_stage"),
-                       cluster = cluster, small_sample = small_sample)
+                       cluster = cluster, small_sample = small_sample,
+                       method = method)
+    if (variability == "two_stage")
+      route <- attr(V, "two_stage_method", exact = TRUE)
     se <- sqrt(pmax(diag(as.matrix(V)), 0))
     z  <- ifelse(se > 0, pp / se, NA_real_)
     tab <- data.frame(Estimate = pp, Std.Error = se, z = z,
@@ -98,6 +115,7 @@ summary.mcglm_graph <- function(object,
     layer = g$type, R = g$R, n = g$n, n_edges = length(g$edge_pos),
     converged = isTRUE(g$converged), status = g$status,
     inference_ok = !isFALSE(g$inference_ok), variability = variability,
+    two_stage_method = route,
     coefficients = tab,
     partial_cor = mc_partial_cor(object),
     criteria = mc_compute_criterion(object, c("aic", "bic", "qic"))
@@ -118,7 +136,10 @@ print.summary.mcglm_graph <- function(x, ...) {
         "standard errors and Wald p-values are suppressed.\n", sep = "")
     cat("Graph parameters:\n")
   } else {
-    cat("Graph parameters (", x$variability, " variability):\n", sep = "")
+    route <- x$two_stage_method
+    cat("Graph parameters (", x$variability, " variability",
+        if (!is.null(route) && !is.na(route)) paste0(", ", route, " form"),
+        "):\n", sep = "")
   }
   print(round(x$coefficients, 4))
   cat("\nPartial correlations:\n"); print(round(x$partial_cor, 3))
@@ -580,7 +601,9 @@ plot.mcglm_graph <- function(x, type = c("network", "residuals"), ...) {
 #'   first stage and is slower. It has no meaning for the other two types.
 #' @param sensitivity for the full form, \code{"observed"} (default) or
 #'   \code{"expected"}, the sensitivity of the first stage described in the
-#'   section "The full form".
+#'   section "The full form". The shortcut and the other two types do not use
+#'   it: \code{"expected"} is refused with them, and gives a warning when
+#'   \code{method = "auto"} takes the shortcut.
 #' @return A \eqn{q_{\mathcal G} \times q_{\mathcal G}} symmetric matrix, with
 #'   \eqn{q_{\mathcal G}} the number of graph parameters and their names in its
 #'   dimnames, carrying the attributes \code{"type"}, \code{"variability"},
@@ -654,6 +677,12 @@ mc_vcov_graph <- function(fit, type = c("model", "sandwich", "two_stage"),
   if (type != "two_stage" && method != "auto")
     stop("method chooses the route of type = \"two_stage\" and has no ",
          "meaning for type = \"", type, "\".", call. = FALSE)
+  # The first-stage sensitivity enters the full form only.
+  if (sensitivity != "observed" && (type != "two_stage" || method == "shortcut"))
+    stop("sensitivity applies to the full form of type = \"two_stage\" and ",
+         "has no meaning for ",
+         if (type != "two_stage") paste0("type = \"", type, "\"") else
+           "method = \"shortcut\"", ".", call. = FALSE)
   if (length(small_sample) != 1L || !is.logical(small_sample) ||
       is.na(small_sample))
     stop("small_sample must be a single TRUE or FALSE.", call. = FALSE)

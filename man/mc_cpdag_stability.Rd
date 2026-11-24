@@ -83,7 +83,11 @@ An object of class \code{"mcg_cpdag_stability"}: a list with
   \code{valid_prob}, the proportion of valid resamples whose output passed
   the validity gates of \code{\link{mc_graph_pipeline}};
   \code{mean_ambiguous}, the average number of ambiguous triples per valid
-  resample; the counts \code{B}, \code{B_valid} and \code{B_failed}; the
+  resample; the counts \code{B}, \code{B_valid} and \code{B_failed};
+  \code{B_incomplete}, the number of valid resamples in which the skeleton
+  search skipped a test that could not be formed, as in
+  \code{\link{mc_pc_skeleton}}, reported in one warning when it is not
+  zero; the
   data frame \code{failures} (\code{replicate}, \code{error}); and the
   settings \code{refit}, \code{alpha}, \code{orient_method},
   \code{orient_rule}, \code{clustered} (logical) and

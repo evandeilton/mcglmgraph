@@ -56,8 +56,8 @@ An object of class \code{"mcg_sepsets"}: a list with \code{pairs}
   incomplete: a neighborhood of the pair is larger than \code{max_ord}, or
   some conditioning set gave no valid test, because its Fisher degrees of
   freedom are not positive or its block gives no valid partial correlation.
-  Such a set is skipped and counted in \code{n_unusable}; unlike in
-  \code{\link{mc_pc_skeleton}}, it does not stop the enumeration.
+  Such a set is skipped and counted in \code{n_unusable}, as in
+  \code{\link{mc_pc_skeleton}}.
   The object also records \code{alpha}, \code{max_ord}, \code{df_residual}
   and \code{response_names}, and \code{diagnostics} with the number of tests
   (\code{n_tests}), of ridge-regularized blocks (\code{n_regularized}), of

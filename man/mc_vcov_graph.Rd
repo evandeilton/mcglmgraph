@@ -43,7 +43,9 @@ first stage and is slower. It has no meaning for the other two types.}
 
 \item{sensitivity}{for the full form, \code{"observed"} (default) or
 \code{"expected"}, the sensitivity of the first stage described in the
-section "The full form".}
+section "The full form". The shortcut and the other two types do not use
+it: \code{"expected"} is refused with them, and gives a warning when
+\code{method = "auto"} takes the shortcut.}
 }
 \value{
 A \eqn{q_{\mathcal G} \times q_{\mathcal G}} symmetric matrix, with

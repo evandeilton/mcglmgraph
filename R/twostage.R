@@ -426,8 +426,13 @@
   if (is.null(g$Dlist))
     stop("The fit does not carry the covariance derivatives.", call. = FALSE)
   sc <- .two_stage_applicable(fit)
-  if (method == "auto") method <- .two_stage_auto_method(fit, cluster, sc,
-                                                         warn = TRUE)
+  if (method == "auto") {
+    method <- .two_stage_auto_method(fit, cluster, sc, warn = TRUE)
+    # The shortcut has no first-stage sensitivity to choose.
+    if (method == "shortcut" && sensitivity != "observed")
+      warning("method = \"auto\" took the shortcut, which does not use ",
+              "sensitivity; method = \"full\" applies it.", call. = FALSE)
+  }
   if (method == "shortcut" && !sc$ok)
     stop("the two-stage shortcut does not apply to this fit: ",
          paste(sc$why, collapse = "; "),

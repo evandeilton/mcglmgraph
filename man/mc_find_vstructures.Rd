@@ -18,7 +18,9 @@ mc_find_vstructures(
 \item{alpha}{significance level of the second-order separation test.}
 
 \item{max_ord}{maximum conditioning order passed to
-\code{\link{mc_pc_skeleton}} and to the enumeration of separating sets.}
+\code{\link{mc_pc_skeleton}} and to the enumeration of separating sets.
+A test the skeleton search cannot form is skipped with the warning
+described there.}
 
 \item{df_residual}{optional residual degrees of freedom passed to
 \code{\link{mc_pc_skeleton}} and to the reported separating-set tests:

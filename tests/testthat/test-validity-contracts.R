@@ -50,6 +50,7 @@ test_that("the pipeline earns the CPDAG label only through its gates", {
   expect_identical(p$label, "CPDAG")
   expect_setequal(names(p$gates),
                   c("no_orientation_conflict", "unregularized_separation",
+                    "complete_separation",
                     "orientation_within_skeleton", "skeleton_preserved",
                     "acyclic", "vstructures_preserved",
                     "consistent_extension"))

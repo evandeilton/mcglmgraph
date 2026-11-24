@@ -209,8 +209,8 @@ test_that("the pipeline carries the rule and the ambiguity through", {
   # the skeleton is untouched by the rule: only the orientation can differ
   expect_identical(cons$pc_skeleton, std$pc_skeleton)
   expect_identical(cons$sepset, std$sepset)
-  # and the validity gates keep their seven names
-  expect_equal(length(std$gates), 7L)
+  # and the validity gates keep their eight names
+  expect_equal(length(std$gates), 8L)
   expect_identical(names(cons$gates), names(std$gates))
 })
 

@@ -24,22 +24,28 @@
 # partial correlation and the two-sided p-value of H0: rho_{ij . S} = 0. Fisher's
 # z is a working approximation: for dependent responses fitted by estimating
 # functions its calibration is only approximate.
-.ci_pcor <- function(Sigma, i, j, S, n, df_residual = NULL) {
+# With strict = FALSE a test that cannot be formed returns NULL instead of
+# stopping, so that a search can skip it and count it.
+.ci_pcor <- function(Sigma, i, j, S, n, df_residual = NULL, strict = TRUE) {
   # With raw observations the Fisher factor is sqrt(n - |S| - 3). If the caller
   # supplies nu_e, the residual degrees of freedom after the first-stage fit,
   # it is sqrt(nu_e - |S| - 2).
   df <- if (is.null(df_residual)) n - length(S) - 3 else
     df_residual - length(S) - 2
-  if (!is.finite(df) || df <= 0)
+  if (!is.finite(df) || df <= 0) {
+    if (!strict) return(NULL)
     stop("Insufficient Fisher degrees of freedom: need a positive value, got ",
          format(df), " for conditioning order ", length(S), ".")
+  }
   # One kernel serves the skeleton and the enumeration of separating sets.
   r <- cpp_ci_pcor(as.matrix(Sigma), as.integer(i), as.integer(j),
                    as.integer(S), as.numeric(n),
                    if (is.null(df_residual)) 0 else as.numeric(df_residual))
-  if (!isTRUE(r$usable))
+  if (!isTRUE(r$usable)) {
+    if (!strict) return(NULL)
     stop("Conditional-association block does not define a valid partial ",
          "correlation.")
+  }
   list(pcor = r$pcor, p_value = r$p_value, df = r$df,
        inversion_status = if (isTRUE(r$regularized)) "ridge_regularized" else
          "exact",
@@ -215,10 +221,13 @@ print.mcg_residual_df <- function(x, ...) {
 #' removed, when the two-sided normal p-value of \eqn{z} is at least
 #' \code{alpha}. A block that is nearly singular is inverted after a ridge of
 #' \eqn{10^{-8}} times its scale and the event is counted in
-#' \code{diagnostics}; a conditioning order whose Fisher degrees of freedom are
-#' not positive, or a block that gives no valid partial correlation even after
-#' the ridge, is an error. Because \code{Sigma} is usually computed from the
-#' estimated residuals of responses that need not be Gaussian, the normal
+#' \code{diagnostics}. A conditioning set whose Fisher degrees of freedom are
+#' not positive, or whose block gives no valid partial correlation even after
+#' the ridge, gives no test: it is skipped, as in
+#' \code{\link{mc_separating_sets}}, so it removes no edge, and the skipped
+#' tests are counted in \code{n_unusable} and reported in one warning of class
+#' \code{"mcg_unusable_tests"}. Because \code{Sigma} is usually computed from
+#' the estimated residuals of responses that need not be Gaussian, the normal
 #' reference for \eqn{z} is a working asymptotic calibration and not an exact
 #' one. The factor takes
 #' \code{n} as the number of independent units, the rows of the data for a fit
@@ -245,9 +254,14 @@ print.mcg_residual_df <- function(x, ...) {
 #'   \code{NULL} when the pair was never separated; the \code{df_residual}
 #'   used; and \code{diagnostics}, a list with the number of tests
 #'   (\code{n_tests}), the number of ridge-regularized blocks
-#'   (\code{n_regularized}), the largest ridge (\code{max_ridge}), the smallest
-#'   Fisher degrees of freedom (\code{min_df}) and the contract used
-#'   (\code{df_contract}).
+#'   (\code{n_regularized}), the number of tests that could not be formed
+#'   (\code{n_unusable}, included in \code{n_tests}), the largest ridge
+#'   (\code{max_ridge}), the smallest Fisher degrees of freedom among the
+#'   valid tests (\code{min_df}) and the contract used (\code{df_contract}).
+#'   The search visits a pair from each of its two responses, so a
+#'   conditioning set common to both neighborhoods enters these counts twice.
+#'   The two counts are integers, and doubles when they exceed the integer
+#'   range.
 #' @references Spirtes, P., Glymour, C. and Scheines, R. (2000).
 #'   \emph{Causation, Prediction, and Search}, 2nd edition. MIT Press.
 #'
@@ -278,19 +292,31 @@ mc_pc_skeleton <- function(Sigma, n, alpha = 0.05, max_ord = NULL,
   if (length(max_ord) != 1L || !is.finite(max_ord) || max_ord < 0)
     stop("max_ord must be one non-negative integer.")
   max_ord <- min(as.integer(max_ord), R - 2L)
-  n_tests <- 0L
+  n_tests <- 0
   n_regularized <- 0L
+  n_unusable <- 0
   max_ridge <- 0
   min_df <- Inf
   ord <- 0L
   repeat {
     adj0 <- adj                       # frozen neighborhoods (PC-stable)
     has_candidate <- FALSE
+    # The Fisher factor depends on the order alone.
+    df_ord <- (if (is.null(df_residual)) n - 3 else df_residual - 2) - ord
+    no_test <- !is.finite(df_ord) || df_ord <= 0
     for (i in seq_len(R)) for (j in seq_len(R)) {
       if (i == j || adj[i, j] == 0L) next
       nb <- setdiff(which(adj0[i, ] == 1L), j)
       if (length(nb) < ord) next
       has_candidate <- TRUE
+      # No set of this order gives a test: they are counted without being
+      # enumerated, and none can separate the pair.
+      if (no_test) {
+        k <- choose(length(nb), ord)
+        n_tests <- n_tests + k
+        n_unusable <- n_unusable + k
+        next
+      }
       # Enumerate conditioning sets by position and map back into nb. Indexing
       # positions avoids utils::combn() treating a length-one nb as a scalar n
       # (which would silently condition on seq_len(nb) instead of nb itself).
@@ -298,8 +324,11 @@ mc_pc_skeleton <- function(Sigma, n, alpha = 0.05, max_ord = NULL,
         lapply(utils::combn(length(nb), ord, simplify = FALSE),
                function(pos) nb[pos])
       for (S in combos) {
-        tst <- .ci_pcor(Sigma, i, j, S, n, df_residual = df_residual)
-        n_tests <- n_tests + 1L
+        tst <- .ci_pcor(Sigma, i, j, S, n, df_residual = df_residual,
+                        strict = FALSE)
+        n_tests <- n_tests + 1
+        # no valid test for this set: it cannot separate the pair
+        if (is.null(tst)) { n_unusable <- n_unusable + 1; next }
         n_regularized <- n_regularized +
           as.integer(tst$inversion_status != "exact")
         max_ridge <- max(max_ridge, tst$inversion_ridge)
@@ -315,11 +344,27 @@ mc_pc_skeleton <- function(Sigma, n, alpha = 0.05, max_ord = NULL,
     ord <- ord + 1L
     if (!has_candidate || ord > max_ord) break
   }
+  # Counts are integers whenever they fit in one.
+  as_count <- function(x) if (x <= .Machine$integer.max) as.integer(x) else x
+  n_tests <- as_count(n_tests)
+  n_unusable <- as_count(n_unusable)
+  # One classed warning, so that a caller repeating the search can collect it.
+  if (n_unusable > 0)
+    warning(structure(
+      class = c("mcg_unusable_tests", "warning", "condition"),
+      list(message = paste0(
+        format(n_unusable, scientific = FALSE),
+        if (n_unusable > 1) " tests of conditional association" else
+          " test of conditional association",
+        " could not be formed and ",
+        if (n_unusable > 1) "were" else "was",
+        " skipped; no edge was removed on ",
+        if (n_unusable > 1) "them" else "it", "."), call = NULL)))
   list(
     adjacency = adj, sepset = sepset, df_residual = df_residual,
     diagnostics = list(
       n_tests = n_tests, n_regularized = n_regularized,
-      max_ridge = max_ridge,
+      n_unusable = n_unusable, max_ridge = max_ridge,
       min_df = if (is.finite(min_df)) min_df else NA_real_,
       df_contract = if (is.null(df_residual)) "n - |S| - 3" else
         "df_residual - |S| - 2"
@@ -374,8 +419,8 @@ mc_pc_skeleton <- function(Sigma, n, alpha = 0.05, max_ord = NULL,
 #'   incomplete: a neighborhood of the pair is larger than \code{max_ord}, or
 #'   some conditioning set gave no valid test, because its Fisher degrees of
 #'   freedom are not positive or its block gives no valid partial correlation.
-#'   Such a set is skipped and counted in \code{n_unusable}; unlike in
-#'   \code{\link{mc_pc_skeleton}}, it does not stop the enumeration.
+#'   Such a set is skipped and counted in \code{n_unusable}, as in
+#'   \code{\link{mc_pc_skeleton}}.
 #'   The object also records \code{alpha}, \code{max_ord}, \code{df_residual}
 #'   and \code{response_names}, and \code{diagnostics} with the number of tests
 #'   (\code{n_tests}), of ridge-regularized blocks (\code{n_regularized}), of
@@ -704,6 +749,8 @@ print.mcg_sepsets <- function(x, ...) {
 #' @param alpha significance level of the second-order separation test.
 #' @param max_ord maximum conditioning order passed to
 #'   \code{\link{mc_pc_skeleton}} and to the enumeration of separating sets.
+#'   A test the skeleton search cannot form is skipped with the warning
+#'   described there.
 #' @param df_residual optional residual degrees of freedom passed to
 #'   \code{\link{mc_pc_skeleton}} and to the reported separating-set tests:
 #'   \code{NULL} for the approximation by \eqn{n}, a number, or \code{"auto"},
@@ -1116,14 +1163,18 @@ mc_skeleton_to_bnlearn <- function(edges, node_names) {
 #'   left undecided, and their number \code{n_ambiguous};
 #'   \code{meek_iterations} and \code{meek_blocked}, the number of sweeps of
 #'   Meek's rules and of orientations withheld by an ambiguous triple;
-#'   \code{separation_diagnostics}, the diagnostics of the skeleton search; and
+#'   \code{separation_diagnostics}, the diagnostics of the skeleton search,
+#'   with the tests it skipped in \code{n_unusable}; and
 #'   \code{alpha}, \code{df_residual} and \code{response_names}. The
 #'   \code{print} method returns \code{x} invisibly.
 #' @section What the output may be called:
-#' The output is submitted to seven checks, reported in \code{gates}: no pair
+#' The output is submitted to eight checks, reported in \code{gates}: no pair
 #' of colliders or of rules required opposite directions on an edge
 #' (\code{no_orientation_conflict}); no separation test needed a ridge to
-#' invert its block (\code{unregularized_separation}); the orientation stayed
+#' invert its block (\code{unregularized_separation}); every separation test
+#' of the skeleton search could be formed, none being skipped as in
+#' \code{\link{mc_pc_skeleton}} (\code{complete_separation}); the orientation
+#' stayed
 #' within the learned skeleton (\code{orientation_within_skeleton}) and kept
 #' all of it (\code{skeleton_preserved}); the directed part has no cycle
 #' (\code{acyclic}); every collider that was written survives Meek propagation
@@ -1135,7 +1186,7 @@ mc_skeleton_to_bnlearn <- function(edges, node_names) {
 #' \code{valid_cpdag} is \code{FALSE} and \code{label} becomes
 #' \code{"second-order partially directed structure"}: the object still records
 #' what the separations supported, but it is not certified as the CPDAG of a
-#' Markov equivalence class. The first two checks record facts of the run and
+#' Markov equivalence class. The first three checks record facts of the run and
 #' not properties of the returned graph, so a refused label does not establish
 #' that the output differs from the CPDAG of a class. A triple left ambiguous
 #' by the conservative or majority rule stays unoriented, so a certified output
@@ -1238,6 +1289,7 @@ mc_graph_pipeline <- function(fit, alpha = 0.05,
   native_skeleton <- skel$adjacency == 1L
   gates <- c(no_orientation_conflict = nrow(conflicts) == 0L,
              unregularized_separation = skel$diagnostics$n_regularized == 0L,
+             complete_separation = skel$diagnostics$n_unusable == 0L,
              orientation_within_skeleton = !any(output_skeleton &
                                                   !native_skeleton),
              skeleton_preserved = identical(unname(output_skeleton),
@@ -1334,6 +1386,11 @@ print.mcg_cpdag <- function(x, ...) {
     cat(sprintf("Regularized separation tests: %d (max ridge %.3g)\n",
                 x$separation_diagnostics$n_regularized,
                 x$separation_diagnostics$max_ridge))
+  if (!is.null(x$separation_diagnostics) &&
+      isTRUE(x$separation_diagnostics$n_unusable > 0L))
+    cat(sprintf("Separation tests skipped as not valid: %s\n",
+                format(x$separation_diagnostics$n_unusable,
+                       scientific = FALSE)))
   cat("Adjacency:\n"); print(x$cpdag)
   invisible(x)
 }

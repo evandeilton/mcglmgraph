@@ -1,3 +1,21 @@
+# mcglmgraph 0.8.5
+
+* `summary()` of a fit and `mc_dag_coefficients()` take `method`, the route of
+  the two-stage correction, and report the route taken in `two_stage_method`.
+* `mc_wald_graph()` and `mc_test_adequacy()` refuse a `method` other than
+  `"auto"` when `type` is not `"two_stage"`, as `mc_vcov_graph()` does.
+* `mc_vcov_graph()`: `sensitivity = "expected"` is refused where it has no
+  effect, with `type` other than `"two_stage"` or with `method = "shortcut"`,
+  and gives a warning when `method = "auto"` takes the shortcut.
+* `mc_pc_skeleton()` skips a conditioning set that gives no valid test, as
+  `mc_separating_sets()` does, instead of stopping: the set removes no edge,
+  and the skipped tests are counted in `diagnostics$n_unusable` and reported
+  in one warning of class `"mcg_unusable_tests"`.
+* `mc_graph_pipeline()` has the gate `complete_separation`, which fails when
+  the skeleton search skipped a test, so such an output is not labeled a
+  CPDAG. `mc_cpdag_stability()` counts those resamples in `B_incomplete` and
+  reports them in one warning.
+
 # mcglmgraph 0.8.4
 
 * `mc_test_independence()` and `mc_partial_cor_delta()` take `method`, the

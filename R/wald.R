@@ -124,6 +124,10 @@
 #' @param type the covariance: \code{"sandwich"} (default), \code{"model"} or
 #'   \code{"two_stage"}, as in \code{\link{mc_vcov_graph}}.
 #' @inheritParams mc_vcov_graph
+#' @param method for \code{type = "two_stage"}, the route of the correction,
+#'   \code{"auto"} (default), \code{"shortcut"} or \code{"full"}, as in
+#'   \code{\link{mc_vcov_graph}}. It has no meaning for the other two types and
+#'   is refused with them when it is not \code{"auto"}.
 #' @return An object of class \code{"htest"}: the Wald \code{statistic}
 #'   \eqn{W} (named \code{"X-squared"}); \code{parameter}, the degrees of
 #'   freedom \code{df}, equal to the rank of \code{L}; the \code{p.value};
@@ -162,6 +166,10 @@ mc_wald_graph <- function(fit, L, rhs = 0,
   stopifnot(inherits(fit, "mcglm_graph"))
   type <- match.arg(type)
   method <- match.arg(method)
+  # The route applies to the two-stage covariance only.
+  if (type != "two_stage" && method != "auto")
+    stop("method chooses the route of type = \"two_stage\" and has no ",
+         "meaning for type = \"", type, "\".", call. = FALSE)
   .assert_graph_inference(fit, "Wald testing")
   g <- fit$graph
   par <- as.numeric(g$par)
@@ -175,8 +183,7 @@ mc_wald_graph <- function(fit, L, rhs = 0,
   rhs <- rep_len(as.numeric(rhs), q)
 
   V <- mc_vcov_graph(fit, type = type, cluster = cluster,
-                     small_sample = small_sample,
-                     method = if (type == "two_stage") method else "auto")
+                     small_sample = small_sample, method = method)
   V <- as.matrix(V)
   est <- as.numeric(L %*% par)
   d <- est - rhs
@@ -281,6 +288,10 @@ mc_test_adequacy <- function(fit, type = c("sandwich", "model", "two_stage"),
   stopifnot(inherits(fit, "mcglm_graph"))
   type <- match.arg(type)
   method <- match.arg(method)
+  # Refused before the saturated graph is refitted.
+  if (type != "two_stage" && method != "auto")
+    stop("method chooses the route of type = \"two_stage\" and has no ",
+         "meaning for type = \"", type, "\".", call. = FALSE)
   g <- fit$graph
   R <- g$R
   if (identical(g$type, "ggm")) {

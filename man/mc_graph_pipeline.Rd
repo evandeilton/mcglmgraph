@@ -69,7 +69,8 @@ An object of class \code{"mcg_cpdag"}, a list with the 0/1 matrix
   left undecided, and their number \code{n_ambiguous};
   \code{meek_iterations} and \code{meek_blocked}, the number of sweeps of
   Meek's rules and of orientations withheld by an ambiguous triple;
-  \code{separation_diagnostics}, the diagnostics of the skeleton search; and
+  \code{separation_diagnostics}, the diagnostics of the skeleton search,
+  with the tests it skipped in \code{n_unusable}; and
   \code{alpha}, \code{df_residual} and \code{response_names}. The
   \code{print} method returns \code{x} invisibly.
 }
@@ -120,10 +121,13 @@ fails the checks below.
 
 \section{What the output may be called}{
 
-The output is submitted to seven checks, reported in \code{gates}: no pair
+The output is submitted to eight checks, reported in \code{gates}: no pair
 of colliders or of rules required opposite directions on an edge
 (\code{no_orientation_conflict}); no separation test needed a ridge to
-invert its block (\code{unregularized_separation}); the orientation stayed
+invert its block (\code{unregularized_separation}); every separation test
+of the skeleton search could be formed, none being skipped as in
+\code{\link{mc_pc_skeleton}} (\code{complete_separation}); the orientation
+stayed
 within the learned skeleton (\code{orientation_within_skeleton}) and kept
 all of it (\code{skeleton_preserved}); the directed part has no cycle
 (\code{acyclic}); every collider that was written survives Meek propagation
@@ -135,7 +139,7 @@ knowledge"} when the knowledge oriented some edge. When any fails,
 \code{valid_cpdag} is \code{FALSE} and \code{label} becomes
 \code{"second-order partially directed structure"}: the object still records
 what the separations supported, but it is not certified as the CPDAG of a
-Markov equivalence class. The first two checks record facts of the run and
+Markov equivalence class. The first three checks record facts of the run and
 not properties of the returned graph, so a refused label does not establish
 that the output differs from the CPDAG of a class. A triple left ambiguous
 by the conservative or majority rule stays unoriented, so a certified output

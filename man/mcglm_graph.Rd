@@ -35,6 +35,7 @@ mcglmgraph(
   variability = c("model", "empirical", "two_stage"),
   cluster = NULL,
   small_sample = FALSE,
+  method = c("auto", "shortcut", "full"),
   ...
 )
 
@@ -108,13 +109,18 @@ mcglm method by \code{summary} and \code{coef}; passed to
 \item{variability}{for \code{summary}: the covariance of the graph
 parameters behind the standard errors, \code{"model"} (default),
 \code{"empirical"} for the sandwich or \code{"two_stage"}, as in
-\code{\link{mc_vcov_graph}}. With \code{"two_stage"} the correction takes
-the route of \code{method = "auto"} there.}
+\code{\link{mc_vcov_graph}}.}
 
 \item{cluster, small_sample}{for \code{summary}: passed to
 \code{\link{mc_vcov_graph}}; they apply to \code{variability =
 "empirical"} and \code{"two_stage"} only and are refused with
 \code{"model"}.}
+
+\item{method}{for \code{summary} with \code{variability = "two_stage"}:
+the route of the correction, \code{"auto"} (default), \code{"shortcut"}
+or \code{"full"}, as in \code{\link{mc_vcov_graph}}. It has no meaning
+for the other two forms and is refused with them when it is not
+\code{"auto"}.}
 
 \item{type}{for \code{coef}: optional, one of \code{"regression"},
 \code{"graph"} or \code{"dispersion"}, or a \code{type} accepted by the
@@ -274,7 +280,10 @@ Returns an object of class \code{"summary.mcglm_graph"}, a list with the
 first-stage summary in \code{first_stage} and its printed lines in
 \code{first_stage_text}; \code{layer}, \code{R}, \code{n} and
 \code{n_edges}; \code{converged}, \code{status} and
-\code{inference_ok}; the \code{variability} used; the data frame
+\code{inference_ok}; the \code{variability} used and, with
+\code{"two_stage"}, the route taken in \code{two_stage_method}
+(\code{NA} otherwise, and when the fit is not certified for inference);
+the data frame
 \code{coefficients} of the graph parameters, with columns
 \code{Estimate}, \code{Std.Error}, \code{z} (their ratio) and
 \code{p.value} (two-sided, standard normal reference, for the null value

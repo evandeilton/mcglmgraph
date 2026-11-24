@@ -12,7 +12,8 @@ mc_dag_coefficients(
   interval = c("delta", "fixed_factor"),
   cluster = NULL,
   small_sample = FALSE,
-  r2_interval = c("wald", "logit")
+  r2_interval = c("wald", "logit"),
+  method = c("auto", "shortcut", "full")
 )
 
 \method{print}{mcg_dag_coef}(x, ...)
@@ -22,8 +23,7 @@ mc_dag_coefficients(
 
 \item{variability}{\code{"model"} for \eqn{\mathbf J_n^{-1}},
 \code{"empirical"} for the sandwich, or \code{"two_stage"} for the sandwich
-corrected for the estimation of the residuals, by the route
-\code{method = "auto"} takes in \code{\link{mc_vcov_graph}}.}
+corrected for the estimation of the residuals.}
 
 \item{level}{confidence level of the intervals.}
 
@@ -39,6 +39,11 @@ empirical forms.}
 \eqn{(0, 1)}. A response without parents has \eqn{R^2=0} by construction,
 and its interval is that point.}
 
+\item{method}{for \code{variability = "two_stage"}, the route of the
+correction, \code{"auto"} (default), \code{"shortcut"} or \code{"full"},
+as in \code{\link{mc_vcov_graph}}. It has no meaning for the other two
+forms and is refused with them when it is not \code{"auto"}.}
+
 \item{x}{an object of class \code{"mcg_dag_coef"}.}
 
 \item{...}{ignored.}
@@ -52,9 +57,11 @@ An object of class \code{"mcg_dag_coef"}: a list with \code{edges},
   \eqn{R^2_{j\cdot P_j}} with its standard error and interval. The gradients
   of \eqn{\gamma^*} and of \eqn{R^2} travel in the attributes
   \code{"gradient_std"} and \code{"gradient_r2"}. The list also records
-  \code{variability}, \code{level}, \code{interval} and
-  \code{r2_interval}. The \code{print} method shows the main columns and
-  returns \code{x} invisibly.
+  \code{variability}, \code{level}, \code{interval},
+  \code{r2_interval} and \code{two_stage_method}, the route taken with
+  \code{variability = "two_stage"} and \code{NA} otherwise. The
+  \code{print} method shows the main columns and returns \code{x}
+  invisibly.
 }
 \description{
 Reports, with standard errors and intervals, the quantities of the directed

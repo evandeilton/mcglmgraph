@@ -32,9 +32,14 @@ A list with the symmetric integer \code{adjacency} matrix of the
   \code{NULL} when the pair was never separated; the \code{df_residual}
   used; and \code{diagnostics}, a list with the number of tests
   (\code{n_tests}), the number of ridge-regularized blocks
-  (\code{n_regularized}), the largest ridge (\code{max_ridge}), the smallest
-  Fisher degrees of freedom (\code{min_df}) and the contract used
-  (\code{df_contract}).
+  (\code{n_regularized}), the number of tests that could not be formed
+  (\code{n_unusable}, included in \code{n_tests}), the largest ridge
+  (\code{max_ridge}), the smallest Fisher degrees of freedom among the
+  valid tests (\code{min_df}) and the contract used (\code{df_contract}).
+  The search visits a pair from each of its two responses, so a
+  conditioning set common to both neighborhoods enters these counts twice.
+  The two counts are integers, and doubles when they exceed the integer
+  range.
 }
 \description{
 Constraint-based skeleton discovery from a between-response covariance
@@ -59,10 +64,13 @@ statistic. A pair is declared conditionally uncorrelated, and its edge
 removed, when the two-sided normal p-value of \eqn{z} is at least
 \code{alpha}. A block that is nearly singular is inverted after a ridge of
 \eqn{10^{-8}} times its scale and the event is counted in
-\code{diagnostics}; a conditioning order whose Fisher degrees of freedom are
-not positive, or a block that gives no valid partial correlation even after
-the ridge, is an error. Because \code{Sigma} is usually computed from the
-estimated residuals of responses that need not be Gaussian, the normal
+\code{diagnostics}. A conditioning set whose Fisher degrees of freedom are
+not positive, or whose block gives no valid partial correlation even after
+the ridge, gives no test: it is skipped, as in
+\code{\link{mc_separating_sets}}, so it removes no edge, and the skipped
+tests are counted in \code{n_unusable} and reported in one warning of class
+\code{"mcg_unusable_tests"}. Because \code{Sigma} is usually computed from
+the estimated residuals of responses that need not be Gaussian, the normal
 reference for \eqn{z} is a working asymptotic calibration and not an exact
 one. The factor takes
 \code{n} as the number of independent units, the rows of the data for a fit
