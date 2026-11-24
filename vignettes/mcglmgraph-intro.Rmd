@@ -1,0 +1,141 @@
+---
+title: "Introduction to mcglmgraph"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to mcglmgraph}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 5)
+```
+
+## Overview
+
+`mcglmgraph` extends Multivariate Covariance Generalized Linear Models (MCGLM)
+by structuring the residual between-response covariance $\Sigma_b$ with a
+graph. Three layers are available: the Gaussian graphical model (GGM), which
+parametrizes the precision matrix $K_b = \Sigma_b^{-1}$ so that its zeros are
+null partial correlations; the directed acyclic graph (DAG), which uses the
+modified Cholesky (LDL) decomposition under a fixed ordering of the responses;
+and the completed partially directed acyclic graph (CPDAG), the equivalence
+class of DAGs that partial-correlation tests can identify, learned by
+structure-discovery routines. Numerically intensive operations run in C++ via
+`RcppArmadillo`.
+
+Estimation proceeds in two stages. The first stage fits the marginal MCGLM
+(mean and dispersion blocks) and extracts the standardized Pearson residuals.
+The second stage forms their sample between-response covariance and fits the
+graph layer to this second-order object with the Pearson estimating functions
+of the MCGLM, without a joint likelihood. Graph edges therefore describe
+residual conditional association among responses, not raw marginal association.
+In the GGM layer, a missing edge means absence of second-order conditional
+association; it coincides with conditional independence only under joint
+normality of the analyzed residuals. In a Gaussian-copula model, that reading
+applies to a precision matrix fitted on the latent Gaussian scale; the
+Pearson-residual route does not perform that latent transformation.
+
+```{r}
+library(mcglmgraph)
+```
+
+## A worked example: recovering a chain graph
+
+We simulate four responses whose true second-order conditional association graph
+is the chain $1 - 2 - 3 - 4$, add a covariate to two of them, and fit the GGM
+layer.
+
+```{r, eval = requireNamespace("MASS", quietly = TRUE)}
+set.seed(1)
+n <- 300
+K <- diag(4) * 2
+K[1, 2] <- K[2, 1] <- -0.6
+K[2, 3] <- K[3, 2] <- -0.6
+K[3, 4] <- K[4, 3] <- -0.6
+Y <- MASS::mvrnorm(n, rep(0, 4), solve(K))
+x <- rnorm(n)
+dat <- data.frame(y1 = Y[, 1] + 0.5 * x, y2 = Y[, 2],
+                  y3 = Y[, 3], y4 = Y[, 4] - 0.3 * x, x = x)
+
+fit <- mcglm_graph(list(y1 ~ x, y2 ~ x, y3 ~ x, y4 ~ x),
+                   between_graph = mc_between_graph("ggm"), data = dat)
+fit
+```
+
+The partial correlations display the second-order conditional association
+structure. The precision matrix used in the simulation gives a partial
+correlation of 0.30 to each pair of adjacent responses and zero to the other
+pairs; the estimates for adjacent pairs are close to that value and those for
+non-adjacent pairs are close to zero.
+
+```{r, eval = requireNamespace("MASS", quietly = TRUE)}
+round(mc_partial_cor(fit), 3)
+```
+
+The regression coefficients are inherited from the marginal MCGLM fit. The
+graph layer leaves the mean target fixed and re-expresses the residual
+between-response covariance. The standard errors of the graph parameters are
+conditional on the first-stage fit unless a two-stage variance is requested
+(`mc_vcov_graph(type = "two_stage")`).
+
+How much the first stage matters depends on the parameter. Suppose that the
+Pearson residual of each response is $(y - \mu)/\varsigma$, with mean $\mu$
+and scale $\varsigma$ depending only on the first-stage parameters and the
+covariates, that the mean is correctly specified, and that the conditional
+covariance of the residuals given the covariates is the same $\Sigma_b$ for
+every unit. In the GGM layer, with a support that contains the nonzero
+off-diagonal entries of the true precision matrix, estimating the first stage
+then acts on the residual covariance, to first order, as a diagonal rescaling.
+Partial correlations and zeros of the precision matrix are invariant to such a
+rescaling, so the empirical (sandwich) variance of the partial correlations,
+`mc_partial_cor_delta(variability = "empirical")`, and the two-stage variance,
+`variability = "two_stage"`, agree to first order, and so does the null
+distribution of the Wald test that an edge parameter is zero. The correction
+remains for the parameters that depend on the scale: the precision
+coefficients of the edges that are present and the diagonal terms. The
+model-based variance agrees with the two empirical forms only if, in addition,
+the working fourth moments are correct, as under normality. When the residual
+correlation changes with the covariates, as it can with count responses, the
+agreement is only approximate and the two-stage variance is the form to
+report.
+
+## Structure selection
+
+In this sample, stepwise selection with BIC returns the three edges of the
+chain used in the simulation.
+
+```{r, eval = requireNamespace("MASS", quietly = TRUE)}
+sel <- mc_graph_stepwise(fit, criterion = "bic")
+sel$edges
+```
+
+The joint Wald test of the hypothesis that all edge parameters are zero rejects
+it here. The fit is also an `mcglm` object, so the `mcglm` methods (`coef`,
+`vcov`, `gof`, ...) apply to it.
+
+```{r, eval = requireNamespace("MASS", quietly = TRUE)}
+mc_test_independence(fit)
+coef(fit)        # inherited mcglm method
+```
+
+## The DAG layer
+
+The same data can be modeled with the directed acyclic graph layer, which uses
+the modified Cholesky decomposition and guarantees positive definiteness. In
+`mcglmgraph`, this is an ordered residual parametrization. A causal reading
+requires additional subject-matter assumptions, such as a defensible ordering,
+causal sufficiency and faithfulness. When no ordering is justified, the CPDAG
+layer (`mc_graph_pipeline()`, `mc_ges()`) learns the equivalence class instead.
+
+```{r, eval = requireNamespace("MASS", quietly = TRUE)}
+fit_dag <- mcglm_graph(list(y1 ~ x, y2 ~ x, y3 ~ x, y4 ~ x),
+                       between_graph = mc_between_graph("dag"), data = dat)
+mc_compute_criterion(fit_dag, c("aic", "bic"))
+```
+
+## References
+
+Bonat, W. H. and Jorgensen, B. (2016). Multivariate covariance generalized
+linear models. *Journal of the Royal Statistical Society: Series C*, 65(5), 649--675.
+<doi:10.1111/rssc.12145>

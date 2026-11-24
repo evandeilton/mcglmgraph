@@ -1,0 +1,28 @@
+Copyright and attribution notes for the mcglmgraph package
+==========================================================
+
+The mcglmgraph package extends the Multivariate Covariance Generalized Linear
+Models (MCGLM) framework created by Wagner Hugo Bonat and Bent Jorgensen.
+
+The estimation methodology (second-order estimating functions, quasi-score and
+Pearson estimating functions, sensitivity and variability matrices, and the
+sandwich variance estimator) follows the MCGLM framework as documented in:
+
+  Bonat, W. H. and Jorgensen, B. (2016). Multivariate covariance generalized
+  linear models. Journal of the Royal Statistical Society: Series C, 65(5),
+  649-675. <doi:10.1111/rssc.12145>
+
+  Bonat, W. H. (2018). Multiple response variables regression models in R:
+  the mcglm package. Journal of Statistical Software, 84(4), 1-30.
+  <doi:10.18637/jss.v084.i04>
+
+The mcglm package (GPL-3, Wagner Hugo Bonat) is the conceptual and reference
+basis for the estimating-function engine. The mcglmgraph package is licensed
+under GPL-3, consistent with the license of the framework it extends.
+
+The graph-structured between-response parametrizations (Gaussian graphical
+models, directed acyclic graphs via the modified Cholesky decomposition, and
+structure learning) and all C++ kernels in src/ are original contributions of
+Jose Evandeilton Lopes, developed during his doctoral research at the Graduate
+Program in Numerical Methods in Engineering (PPGMNE) of the Federal University
+of Parana (UFPR), under the supervision of Prof. Wagner Hugo Bonat.

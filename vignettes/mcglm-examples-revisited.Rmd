@@ -1,0 +1,278 @@
+---
+title: "The mcglm Examples Revisited with mcglmgraph"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{The mcglm Examples Revisited with mcglmgraph}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
+                      fig.width = 5.5, fig.height = 5)
+EVAL <- requireNamespace("mcglm", quietly = TRUE)
+```
+
+## Purpose
+
+The `mcglm` package documentation and the article of Bonat (2018, *JSS* 84(4))
+illustrate Multivariate Covariance Generalized Linear Models on five datasets:
+the Australian Health Survey (`ahs`), the soybean experiment (`soya`), the
+hunting records of Bioko Island (`Hunting`), a soil-chemistry survey (`soil`)
+and a neonatal study (`NewBorn`). This vignette **reanalyzes every one of those
+examples through the `mcglmgraph` paradigm**: we keep the original mean and
+dispersion specifications but parametrize the residual between-response
+covariance with a **graphical structure**, and we read off the second-order
+conditional association pattern that the unrestricted MCGLM correlation matrix
+leaves implicit.
+
+Because every `mcglm_graph` object is also a genuine `mcglm` object, all the
+familiar methods (`summary`, `coef`, `vcov`, `gof`, `pAIC`, `pBIC`) keep
+working; graph-specific questions are handled through `mc_partial_cor()`,
+`mc_plot_network()`, `mc_test_independence()` and the structure-selection
+functions.
+
+```{r, message = FALSE}
+library(mcglmgraph)
+library(mcglm)
+```
+
+The interpretive thread is always the same. The marginal MCGLM fit supplies
+standardized Pearson residuals; `mcglmgraph` then models their sample
+between-response covariance $\widehat S_e$ through a structured
+$\Sigma_b$. Inverting the fitted covariance yields the precision matrix $K_b$,
+whose off-diagonal zeros indicate absence of **second-order conditional
+association**. Under joint normality of the analyzed residuals this coincides
+with conditional independence. In a Gaussian-copula model, the same reading
+requires a precision matrix fitted on the latent Gaussian scale, which the
+Pearson-residual route does not estimate. In general MCGLMs the safer
+reading is second-order. The normalized precision gives the **partial correlations**:
+residual association between two responses after conditioning on the remaining
+responses. A retained edge is therefore a direct residual association in this
+second-order sense, not automatically a causal effect.
+
+---
+
+## 1. Australian Health Survey (`ahs`): multivariate counts
+
+The `ahs` data record, for 5190 respondents, several counts of health-service
+use. Bonat (2018) models them as Poisson--Tweedie responses with a log link. We
+take three counts jointly: doctor consultations (`Ndoc`), non-doctor
+consultations (`Nndoc`) and hospital admissions (`Nadm`).
+
+```{r ahs-fit, eval = EVAL}
+data(ahs, package = "mcglm")
+fit_ahs <- mcglm_graph(
+  list(Ndoc ~ income + age, Nndoc ~ income + age, Nadm ~ income + age),
+  between_graph = mc_between_graph("ggm"),
+  link        = c("log", "log", "log"),
+  variance    = c("poisson_tweedie", "poisson_tweedie", "poisson_tweedie"),
+  power_fixed = c(TRUE, TRUE, TRUE),
+  data = ahs)
+```
+
+The object behaves as an ordinary MCGLM for the mean and dispersion structure:
+
+```{r ahs-mcglm, eval = EVAL}
+coef(fit_ahs, type = "regression")      # inherited mcglm-style coefficients
+gof(fit_ahs)                            # inherited mcglm goodness-of-fit
+```
+
+The graph layer adds the residual second-order association reading:
+
+```{r ahs-graph, eval = EVAL}
+round(mc_partial_cor(fit_ahs), 3)
+mc_test_independence(fit_ahs)
+```
+
+```{r ahs-net, eval = EVAL, fig.cap = "Residual second-order association network for the ahs counts."}
+mc_plot_network(fit_ahs, edge_labels = TRUE)
+```
+
+**Interpretation.** All three partial correlations are positive, so a person who
+uses one service more tends to use the others more in the residual second-order
+scale, even after adjusting for income and age. The strongest residual link is
+between doctor consultations and hospital admissions: these two remain
+associated once non-doctor consultations are accounted for, which is compatible
+with shared severity not fully captured by the covariates. The two links that
+involve non-doctor consultations are weaker and of similar size. The joint Wald
+test
+(`mc_test_independence`) rejects the null that all residual graph-edge
+parameters are zero, confirming that a graph with edges is warranted rather than
+three separate count regressions.
+
+---
+
+## 2. Soybean experiment (`soya`): mixed-type outcomes
+
+The `soya` experiment records, per plot, a continuous yield (`grain`) and a
+count of seeds (`seeds`) under water and potassium treatments. Bonat (2018) uses
+it to showcase **mixed response types** in a single model. We pair a Tweedie
+continuous response with a Poisson--Tweedie count.
+
+```{r soya-fit, eval = EVAL}
+data(soya, package = "mcglm")
+fit_soya <- mcglm_graph(
+  list(grain ~ factor(water), seeds ~ factor(water)),
+  between_graph = mc_between_graph("ggm"),
+  link        = c("log", "log"),
+  variance    = c("tweedie", "poisson_tweedie"),
+  power_fixed = c(TRUE, TRUE),
+  data = soya)
+round(mc_partial_cor(fit_soya), 3)
+```
+
+**Interpretation.** The partial correlation between grain yield and seed count is
+strongly positive (around 0.86): plots that yield more grain also produce more
+seeds after the water effect has been included in each mean. With only two
+responses the graph is a single edge, but the value is in quantifying, on the
+residual conditional-association scale and across two different distributions
+(continuous and count), how tightly the two agronomic outcomes move together.
+The DAG layer offers a complementary ordered residual parametrization if one
+outcome is substantively taken as antecedent; this ordering alone does not make
+the coefficient causal:
+
+```{r soya-dag, eval = EVAL}
+fit_soya_dag <- mcglm_graph(
+  list(grain ~ factor(water), seeds ~ factor(water)),
+  between_graph = mc_between_graph("dag"),
+  link = c("log", "log"),
+  variance = c("tweedie", "poisson_tweedie"),
+  power_fixed = c(TRUE, TRUE), data = soya)
+mc_compute_criterion(fit_soya_dag, c("aic", "bic"))
+```
+
+---
+
+## 3. Hunting on Bioko Island (`Hunting`): counts with an offset
+
+The `Hunting` data give monthly catches by hunter on Bioko Island, modeled by
+Bonat (2018) as Poisson--Tweedie counts with a log-offset for effort. The
+dataset distinguishes blue duikers (`BD`) from other small animals (`OT`); we
+model the two jointly to ask whether, after accounting for sex and effort, the
+two catch types remain conditionally associated in second order.
+
+```{r hunting-fit, eval = EVAL}
+data(Hunting, package = "mcglm")
+fit_hunt <- mcglm_graph(
+  list(OT ~ SEX, BD ~ SEX),
+  between_graph = mc_between_graph("ggm"),
+  link        = c("log", "log"),
+  variance    = c("poisson_tweedie", "poisson_tweedie"),
+  power_fixed = c(TRUE, TRUE),
+  offset = list(log(Hunting$OFFSET), log(Hunting$OFFSET)),
+  data = Hunting)
+round(mc_partial_cor(fit_hunt), 3)
+mc_test_independence(fit_hunt)
+```
+
+**Interpretation.** The partial correlation between the two catch types is
+negative and modest in size. Once hunting effort (the offset) and hunter sex
+are taken into account, catching more blue duikers does not come with catching
+more of the other animals; the sign points to a mild substitution effect. The
+Wald test rejects absence of second-order conditional association, but it
+should be read with caution here: the specification above treats the records
+as independent, while the same hunters are observed over several months, and
+within-response dependence that is left out of the first stage can make the
+standard errors of the graph layer too small. A within-response structure for
+the repeated records, or an empirical variance from `mc_vcov_graph()` with the
+`cluster` argument, respects the sampling unit.
+
+---
+
+## 4. Soil chemistry (`soil`): three continuous responses
+
+The `soil` survey measures calcium (`CA`), magnesium (`MG`) and potassium (`K`)
+at 250 spatial locations, with texture and pH covariates. Bonat (2018) treats
+each as a Tweedie response. Jointly, the three cations form a natural setting for
+a GGM layer: which pairs remain associated in second order after conditioning
+on the third response and on the soil covariates?
+
+```{r soil-fit, eval = EVAL}
+data(soil, package = "mcglm")
+fit_soil <- mcglm_graph(
+  list(CA ~ SAND + SILT + CLAY + PHWATER,
+       MG ~ SAND + SILT + CLAY + PHWATER,
+       K  ~ SAND + SILT + CLAY + PHWATER),
+  between_graph = mc_between_graph("ggm"),
+  data = soil)
+round(mc_partial_cor(fit_soil), 3)
+```
+
+```{r soil-net, eval = EVAL, fig.cap = "Residual second-order association network for the soil cations."}
+mc_plot_network(fit_soil, edge_labels = TRUE)
+```
+
+Structure selection asks whether any edge can be dropped:
+
+```{r soil-sel, eval = EVAL}
+sel_soil <- mc_graph_stepwise(fit_soil, criterion = "bic")
+sel_soil
+```
+
+**Interpretation.** Calcium and magnesium show the strongest residual
+conditional association, as expected from their shared geochemical behavior in
+the cation-exchange complex; magnesium and potassium are moderately linked; the
+calcium--potassium partial correlation is the weakest. Backward selection by BIC
+reports which of these survives as an edge, yielding a parsimonious
+second-order dependence graph that summarizes the soil-chemical co-variation
+beyond what the texture and pH covariates already explain.
+
+---
+
+## 5. Neonatal study (`NewBorn`): physiological signals
+
+The `NewBorn` data follow neonates with several physiological measurements.
+Bonat (2018) analyzes oxygen saturation; here we model two vital signs jointly,
+heart rate (`HR`) and respiratory rate (`RR`), as a function of sex and
+gestational age, and read the residual second-order link between them.
+
+```{r newborn-fit, eval = EVAL}
+data(NewBorn, package = "mcglm")
+fit_nb <- mcglm_graph(
+  list(HR ~ Sex + GA, RR ~ Sex + GA),
+  between_graph = mc_between_graph("ggm"),
+  data = NewBorn)
+round(mc_partial_cor(fit_nb), 3)
+mc_test_independence(fit_nb)
+```
+
+**Interpretation.** Heart rate and respiratory rate retain a positive partial
+correlation after adjusting for sex and gestational age, the expected
+cardio-respiratory coupling. Quantifying it on the residual conditional scale,
+within the MCGLM that already accounts for the covariate effects, is precisely
+what the graph layer contributes: it separates the part of the HR--RR
+association that is explained by shared predictors from the residual link
+between the two signals.
+
+---
+
+## The model as a whole
+
+Across the five examples the workflow is identical and inherits everything from
+MCGLM:
+
+1. specify the mean and dispersion exactly as in `mcglm` (links, variance
+   functions, offsets, mixed-model bases);
+2. choose a graph layer for the residual between-response covariance,
+   `mc_between_graph("ggm")` or `"dag"`;
+3. read the structure with `mc_partial_cor()`, `mc_plot_network()`,
+   `mc_test_independence()`, and prune it with `mc_graph_stepwise()` or
+   `mc_select_lambda()`;
+4. use inherited `mcglm` methods (`summary`, `coef`, `vcov`, `gof`, `pAIC`,
+   `pBIC`, `plogLik`) for the marginal model, and graph-specific functions for
+   graph hypotheses.
+
+The graph layer is fitted after the marginal
+MCGLM and does not change the marginal mean target. It re-expresses the
+between-response residual covariance in a form whose zeros are interpretable as
+absence of second-order conditional association. What the analyst gains is a
+principled answer to the question the unrestricted correlation matrix cannot
+pose: *given all the other responses, which pairs remain directly associated in
+the residual second-order scale?*
+
+## Reference
+
+Bonat, W. H. (2018). Multiple response variables regression models in R: the
+mcglm package. *Journal of Statistical Software*, 84(4), 1--30.
+<doi:10.18637/jss.v084.i04>

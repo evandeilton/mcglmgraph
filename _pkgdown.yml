@@ -1,0 +1,117 @@
+url: https://evandeilton.github.io/mcglmgraph/
+
+template:
+  bootstrap: 5
+  light-switch: false
+  bslib:
+    bg: "#ffffff"
+    fg: "#1e293b"
+    primary: "#4f46e5"
+    secondary: "#0d9488"
+    link-color: "#4338ca"
+    headings-color: "#0f172a"
+    base_font: {google: "Inter"}
+    heading_font: {google: "Space Grotesk"}
+    code_font: {google: "IBM Plex Mono"}
+
+navbar:
+  structure:
+    left: [intro, reference, articles, cheatsheet, news]
+    right: [search]
+  components:
+    intro:
+      text: Get started
+      href: articles/mcglmgraph-intro.html
+    cheatsheet:
+      text: Cheat sheet
+      href: articles/cheatsheet.html
+
+articles:
+- title: Get started
+  contents:
+  - mcglmgraph-intro
+- title: Worked comparisons
+  contents:
+  - mcglm-vs-mcglmgraph
+  - mcglm-examples-revisited
+- title: Reference card
+  contents:
+  - articles/cheatsheet
+
+reference:
+- title: Specify and fit
+  contents:
+  - mc_between_graph
+  - mcglm_graph
+- title: Read the graph layer
+  contents:
+  - mc_partial_cor
+  - mc_partial_cor_delta
+  - mc_dag_coefficients
+  - mc_get_graph
+  - mc_plot_network
+- title: Inference on the graph layer
+  contents:
+  - mc_vcov_graph
+  - mc_two_stage_available
+  - mc_wald_graph
+  - mc_test_independence
+  - mc_test_adequacy
+  - mc_edge_scores
+- title: Compare supports
+  contents:
+  - mc_compute_criterion
+  - mc_graph_ploglik
+  - mc_graph_cv
+- title: Select an undirected graph
+  contents:
+  - mc_graph_stepwise
+  - mc_select_lambda
+  - mc_graph_penalized
+  - mcg_selection-methods
+- title: Discover a directed structure
+  contents:
+  - mc_graph_pipeline
+  - mc_ges
+  - mc_pc_skeleton
+  - mc_separating_sets
+  - mc_find_vstructures
+  - mc_orient_meek
+  - mc_residual_df
+  - mc_skeleton_to_bnlearn
+- title: Equivalence classes and directed fits
+  contents:
+  - mc_class_members
+  - mc_class_coefficients
+  - mc_dag_closed_root
+- title: Stability and resampling
+  contents:
+  - mc_graph_stability
+  - mc_cpdag_stability
+  - mc_graph_bootstrap
+- title: Check against a known truth
+  contents:
+  - mc_structure_metrics
+  - mc_cpdag_metrics
+  - mc_true_cpdag
+  - mc_sid
+- title: Covariance algebra
+  desc: Building blocks of the two parametrizations.
+  contents:
+  - mc_precision_bases
+  - mc_build_precision
+  - mc_precision_to_covariance
+  - mc_precision_derivatives
+  - mc_spd_line_search
+  - mc_check_spd
+  - mc_build_T_matrix
+  - mc_build_D_matrix
+  - mc_cholesky_to_covariance
+  - mc_cholesky_to_precision
+  - mc_cholesky_derivatives
+  - mc_dag_sensitivity
+  - mc_dag_unit_diagonal
+  - mc_build_sigma_between_graph
+- title: Package
+  contents:
+  - mcglmgraph-package

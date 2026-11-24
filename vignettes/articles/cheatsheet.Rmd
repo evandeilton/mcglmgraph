@@ -1,0 +1,22 @@
+---
+title: "Cheat sheet"
+description: >
+  Two pages that cover the whole package: specify, fit, read and test the
+  graph layer, then compare, select, discover and check structures.
+---
+
+The cheat sheet is available as a printable PDF (two pages, US Letter
+landscape) and as an HTML page with the same layout.
+
+<p>
+<a class="btn btn-primary" href="../cheatsheet/mcglmgraph-cheatsheet.pdf">Download the PDF</a>
+<a class="btn btn-outline-primary" href="../cheatsheet/mcglmgraph-cheatsheet.html">Open the HTML version</a>
+</p>
+
+## Page 1: specify, fit, read and test the graph layer
+
+<a href="../cheatsheet/mcglmgraph-cheatsheet.pdf"><img src="../cheatsheet/preview-1.png" alt="Page 1 of the mcglmgraph cheat sheet" style="width:100%; border:1px solid #e2e8f0;"></a>
+
+## Page 2: compare, select, discover and check structures
+
+<a href="../cheatsheet/mcglmgraph-cheatsheet.pdf"><img src="../cheatsheet/preview-2.png" alt="Page 2 of the mcglmgraph cheat sheet" style="width:100%; border:1px solid #e2e8f0;"></a>

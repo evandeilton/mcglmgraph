@@ -1,0 +1,519 @@
+---
+title: "mcglm and mcglmgraph Side by Side"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{mcglm and mcglmgraph Side by Side}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
+                      fig.width = 7, fig.height = 3.6, fig.align = "center")
+EVAL <- requireNamespace("mcglm", quietly = TRUE)
+HAS_BN <- requireNamespace("bnlearn", quietly = TRUE)
+```
+
+## What is being compared, and what is not
+
+This vignette runs the standard MCGLM engine and the graph-structured engine on
+the same six datasets and puts the two outputs next to each other. Before any
+number appears, it is worth being explicit about what such a comparison can and
+cannot show, because the two fits are not rivals estimating the same thing.
+
+`mcglm_graph()` **contains** `mcglm()`. It fits the marginal mean and dispersion
+blocks by calling `mcglm()`, extracts the standardized Pearson residuals, forms
+their between-response sample covariance, and fits the graph layer to that
+second-order object. The graph layer is a *second stage* on residuals; it never
+revisits the mean structure.
+
+Three consequences follow, and the tables below confirm all three empirically:
+
+1. **The regression coefficients are identical, not merely similar.** Not
+   "close to", not "within tolerance": bit-for-bit the same numbers, because
+   they come from the same call. Any table comparing them is a check that the
+   two-stage contract holds, not a horse race.
+2. **The comparison is entirely about the between-response object.** Standard
+   MCGLM summarizes it as `R(R-1)/2` unstructured correlations
+   `rho`. `mcglmgraph` parametrizes it as a precision matrix and reads
+   *conditional* association off it.
+3. **The extra cost is the second stage only.** Everything the marginal fit
+   costs is paid by both.
+
+So the honest question is not "which fits better". It is: *given that you have
+already paid for an MCGLM fit, what does the graph layer let you say that the
+correlation vector does not?*
+
+```{r libs, message = FALSE, eval = EVAL}
+library(mcglmgraph)
+library(mcglm)
+```
+
+## The comparison harness
+
+Two small readers, then the fitting wrapper. `beta_of()` deliberately calls
+`coef()` with no `type`, so the `mcglm_graph` method falls through to the
+inherited one and both objects are read the same way.
+
+```{r harness, eval = EVAL}
+beta_of <- function(f) { cf <- coef(f); cf$Estimates[cf$Type == "beta"] }
+
+## mcglm reports the between-response correlations as a vector in the order of
+## utils::combn(R, 2); rebuild the matrix so it can sit beside mc_partial_cor().
+rho_matrix <- function(rho, nm) {
+  R <- length(nm); idx <- t(utils::combn(R, 2L))
+  M <- diag(R); dimnames(M) <- list(nm, nm)
+  M[idx] <- rho; M[idx[, 2:1]] <- rho
+  M
+}
+
+## mcglm() takes the Tweedie/Poisson-Tweedie power through control_initial.
+init_power <- function(lp, data, link, variance, power, Z,
+                       Ntrial = NULL, covariance = NULL, offset = NULL) {
+  R <- length(lp); n <- nrow(data)
+  if (is.null(Ntrial))     Ntrial     <- rep(list(rep(1, n)), R)
+  if (is.null(covariance)) covariance <- rep("identity", R)
+  if (is.null(offset))     offset     <- rep(list(NULL), R)
+  ini <- suppressMessages(mc_initial_values(
+    linear_pred = lp, matrix_pred = Z, link = as.list(link),
+    variance = as.list(variance), covariance = as.list(covariance),
+    offset = offset, Ntrial = Ntrial, data = data))
+  ini$power <- lapply(power, as.numeric)
+  ini
+}
+
+## Fit the same specification with both engines and time each one.
+fit_pair <- function(spec) {
+  args <- c(list(linear_pred = spec$lp, matrix_pred = spec$Z,
+                 data = spec$data), spec$args)
+  t_m <- system.time(m <- suppressWarnings(suppressMessages(
+    do.call(mcglm::mcglm, args))))[["elapsed"]]
+  t_g <- system.time(g <- suppressWarnings(suppressMessages(do.call(
+    mcglm_graph, c(list(between_graph = mc_between_graph("ggm")), args)
+  ))))[["elapsed"]]
+  list(name = spec$name, m = m, g = g, t_m = t_m, t_g = t_g)
+}
+```
+
+The pair-level reader is where the two engines actually meet. From the standard
+fit it takes the marginal correlation and its standard error; from the graph fit
+it takes the partial correlation and its delta-method standard error. Same
+pairs, same rows, two readings.
+
+```{r pairtab, eval = EVAL}
+pair_table <- function(p) {
+  g <- p$g$graph; nm <- g$response_names
+  idx <- t(utils::combn(g$R, 2L))
+  smry <- summary(p$m)$Correlation
+  del  <- mc_partial_cor_delta(p$g)
+  rho    <- as.numeric(smry[, "Estimates"])
+  rho_se <- as.numeric(smry[, "Std.error"])
+  data.frame(
+    pair    = paste(nm[idx[, 1]], nm[idx[, 2]], sep = "-"),
+    rho     = rho,
+    rho_p   = 2 * stats::pnorm(-abs(rho / rho_se)),
+    pcor    = del$pcor,
+    pcor_se = del$se,
+    pcor_p  = del$p_value,
+    ## how much of the marginal association survives conditioning
+    shrink  = 1 - abs(del$pcor) / pmax(abs(rho), 1e-8),
+    row.names = NULL, stringsAsFactors = FALSE)
+}
+```
+
+Finally, a matrix display, base graphics only, so the two covariance readings
+can be shown as panels next to each other.
+
+```{r showmat, eval = EVAL}
+show_matrix <- function(M, main, digits = 2) {
+  R <- nrow(M); lab <- rownames(M)
+  lim <- max(abs(M))
+  pal <- grDevices::colorRampPalette(c("#2166AC", "white", "#B2182B"))(64)
+  graphics::image(seq_len(R), seq_len(R), t(M[R:1, , drop = FALSE]),
+                  col = pal, zlim = c(-lim, lim), axes = FALSE,
+                  xlab = "", ylab = "", main = main, cex.main = .95)
+  graphics::axis(3, at = seq_len(R), labels = lab, tick = FALSE, las = 2,
+                 cex.axis = .7, line = -.8)
+  graphics::axis(2, at = seq_len(R), labels = rev(lab), tick = FALSE, las = 2,
+                 cex.axis = .7, line = -.8)
+  for (i in seq_len(R)) for (j in seq_len(R))
+    graphics::text(j, R - i + 1,
+                   formatC(M[i, j], format = "f", digits = digits), cex = .7)
+  invisible(NULL)
+}
+```
+
+## Six specifications
+
+The six datasets span the response types MCGLM was built for: continuous,
+counts with and without an offset, a binomial proportion, and a bounded
+physiological signal. The model specifications are the published ones, so the
+numbers here are comparable to the analyses these datasets are known for.
+
+```{r specs, eval = EVAL}
+specs <- list()
+```
+
+**`marks` (88 x 5, continuous).** Exam scores in five mathematics subjects,
+the canonical dataset of the graphical-models literature. No covariates: the
+mean is an intercept per response, so the whole model *is* the dependence
+structure. This is the cleanest possible test of what the two readings say.
+
+```{r spec-marks, eval = EVAL && HAS_BN}
+data(marks, package = "bnlearn"); marks <- as.data.frame(marks)
+specs$marks <- list(
+  name = "marks", data = marks,
+  lp = lapply(names(marks), function(v) stats::reformulate("1", response = v)),
+  Z  = rep(list(mc_id(marks)), 5),
+  args = list(link = rep("identity", 5), variance = rep("constant", 5),
+              control_algorithm = list(max_iter = 100L, tol = 1e-5,
+                                       verbose = FALSE)))
+```
+
+**`ahs` (5190 x 5, counts).** Australian Health Survey; five health-service
+counts under Poisson-Tweedie with the power estimated.
+
+```{r spec-ahs, eval = EVAL}
+data(ahs, package = "mcglm"); ahs <- as.data.frame(ahs)
+ahs_lp <- lapply(c("Ndoc", "Nndoc", "Nadm", "Nhosp", "Nmed"), function(v)
+  stats::reformulate(c("sex", "age", "income"), response = v))
+ahs_Z <- rep(list(mc_id(ahs)), 5)
+specs$ahs <- list(
+  name = "ahs", data = ahs, lp = ahs_lp, Z = ahs_Z,
+  args = list(link = rep("log", 5), variance = rep("poisson_tweedie", 5),
+              power_fixed = rep(FALSE, 5),
+              control_initial = init_power(ahs_lp, ahs, rep("log", 5),
+                rep("poisson_tweedie", 5), rep(1, 5), ahs_Z),
+              control_algorithm = list(max_iter = 100L, tol = 1e-5,
+                                       verbose = FALSE)))
+```
+
+**`soil` (250 x 3, positive continuous).** Soil chemistry with a spatial trend
+surface in the mean and an inverse covariance link.
+
+```{r spec-soil, eval = EVAL}
+data(soil, package = "mcglm"); soil <- as.data.frame(soil)
+soil_lp <- lapply(c("CA", "MG", "K"), function(v) stats::reformulate(
+  c("COORD.X * COORD.Y", "SAND", "SILT", "CLAY", "PHWATER"), response = v))
+soil_Z <- rep(list(mc_id(soil)), 3)
+specs$soil <- list(
+  name = "soil", data = soil, lp = soil_lp, Z = soil_Z,
+  args = list(link = rep("log", 3), variance = rep("tweedie", 3),
+              power_fixed = rep(TRUE, 3), covariance = rep("inverse", 3),
+              control_initial = init_power(soil_lp, soil, rep("log", 3),
+                rep("tweedie", 3), rep(1.5, 3), soil_Z,
+                covariance = rep("inverse", 3)),
+              control_algorithm = list(max_iter = 1000L, tuning = 0.1,
+                                       verbose = FALSE, tol = 1e-3)))
+```
+
+**`Hunting` (1216 x 2, counts with offset).** Two prey types, hunting effort as
+an offset, and a hunter-month random effect in the within-response block. With
+`R = 2` there is exactly one candidate edge, which makes it the boundary case.
+
+```{r spec-hunting, eval = EVAL}
+data(Hunting, package = "mcglm"); Hunting <- as.data.frame(Hunting)
+Hunting <- Hunting[order(Hunting$HUNTER, Hunting$MONTH), , drop = FALSE]
+Hunting$HUNTER.MONTH <- factor(Hunting$HUNTER.MONTH)
+hunt_Z <- rep(list(c(mc_id(Hunting),
+                     mc_mixed(~ 0 + HUNTER.MONTH, data = Hunting))), 2)
+hf <- OT ~ METHOD * ALT + SEX + ALT * poly(MONTH, 4)
+hunt_lp <- list(hf, stats::update(hf, BD ~ .))
+hunt_off <- rep(list(log(Hunting$OFFSET)), 2)
+specs$Hunting <- list(
+  name = "Hunting", data = Hunting, lp = hunt_lp, Z = hunt_Z,
+  args = list(link = rep("log", 2), variance = rep("poisson_tweedie", 2),
+              power_fixed = rep(FALSE, 2), offset = hunt_off,
+              control_initial = init_power(hunt_lp, Hunting, rep("log", 2),
+                rep("poisson_tweedie", 2), rep(1, 2), hunt_Z,
+                offset = hunt_off),
+              control_algorithm = list(max_iter = 100L, tol = 1e-5,
+                                       verbose = FALSE)))
+```
+
+**`soya` (75 x 3, mixed types).** A continuous yield, a count, and a binomial
+proportion in the same model, each with its own link and variance function.
+
+```{r spec-soya, eval = EVAL}
+data(soya, package = "mcglm"); soya <- as.data.frame(soya)
+soya$viable_prop <- with(soya, viablepeas / totalpeas)
+soya_lp <- list(grain ~ block + factor(water) * factor(pot),
+                seeds ~ block + factor(water) * factor(pot),
+                viable_prop ~ block + factor(water) * factor(pot))
+soya_Z <- rep(list(mc_id(soya)), 3)
+soya_Nt <- list(NULL, NULL, soya$totalpeas)
+specs$soya <- list(
+  name = "soya", data = soya, lp = soya_lp, Z = soya_Z,
+  args = list(link = c("identity", "log", "logit"),
+              variance = c("constant", "tweedie", "binomialP"),
+              power_fixed = rep(TRUE, 3), Ntrial = soya_Nt,
+              control_initial = init_power(soya_lp, soya,
+                c("identity", "log", "logit"),
+                c("constant", "tweedie", "binomialP"), c(0, 1, 1),
+                soya_Z, Ntrial = soya_Nt),
+              control_algorithm = list(max_iter = 100L, tol = 1e-5,
+                                       verbose = FALSE)))
+```
+
+**`NewBorn` (270 x 3, physiological).** Heart rate, respiratory rate and oxygen
+saturation on premature newborns.
+
+```{r spec-newborn, eval = EVAL}
+data(NewBorn, package = "mcglm"); NewBorn <- as.data.frame(NewBorn)
+specs$NewBorn <- list(
+  name = "NewBorn", data = NewBorn,
+  lp = list(HR ~ Sex + GA, RR ~ Sex + GA, SPO2 ~ Sex + GA),
+  Z = rep(list(mc_id(NewBorn)), 3),
+  args = list(link = c("log", "log", "identity"),
+              variance = c("tweedie", "tweedie", "constant"),
+              power_fixed = rep(TRUE, 3),
+              control_algorithm = list(max_iter = 100L, tol = 1e-5,
+                                       verbose = FALSE)))
+```
+
+## Running both engines
+
+```{r run, eval = EVAL}
+fits <- lapply(specs, fit_pair)
+sels <- lapply(fits, function(p) suppressWarnings(suppressMessages(
+  mc_graph_stepwise(p$g, criterion = "gbic", trace = FALSE))))
+pts  <- lapply(fits, pair_table)
+```
+
+## The master table
+
+```{r master, eval = EVAL}
+master <- do.call(rbind, Map(function(p, sel, pt) {
+  R <- p$g$graph$R
+  data.frame(
+    dataset   = p$name,
+    n         = p$g$graph$n,
+    R         = R,
+    beta_gap  = max(abs(beta_of(p$m) - beta_of(p$g))),
+    rho_free  = choose(R, 2),
+    edges     = sel$n_edges,
+    dropped   = sprintf("%.0f%%", 100 * (1 - sel$n_edges / choose(R, 2))),
+    flips     = sum(pt$rho_p < .05 & pt$pcor_p >= .05),
+    wald_p    = unname(mc_test_independence(p$g, robust = TRUE)$p.value),
+    sec_mcglm = round(p$t_m, 2),
+    sec_graph = round(p$t_g, 2),
+    row.names = NULL, stringsAsFactors = FALSE)
+}, fits, sels, pts))
+knitr::kable(master, digits = c(0, 0, 0, 10, 0, 0, 0, 0, 3, 2, 2))
+```
+
+Read the columns in three groups.
+
+**`beta_gap` is exactly zero on every dataset.** This is the two-stage contract,
+visible: the largest absolute discrepancy between the regression coefficients of
+the two fits, across all six models and every coefficient in them, is zero. The
+graph layer buys its structure without touching a single mean parameter. If you
+were hoping the graph layer would sharpen the regression estimates, this column
+is the answer: it does not, and it is not meant to.
+
+**`rho_free` versus `edges`.** The standard fit always carries `R(R-1)/2`
+correlation parameters; it has no mechanism to decide that one of them is
+unnecessary. The graph layer, selected by GBIC, keeps between 0 and 7 of them.
+`Hunting` is the extreme: the single available correlation is dropped
+altogether.
+
+**`sec_mcglm` versus `sec_graph`.** The graph timing *includes* the marginal fit,
+because `mcglm_graph()` performs it internally, so the two columns are not
+additive: the second is the first plus the second stage. They come out
+indistinguishable, and on some runs `sec_graph` is even the smaller of the two.
+That is not the graph layer running faster than nothing; it is the second stage
+costing less than the run-to-run variation of the marginal fit it sits on top
+of, at every sample size here including `n = 5190`. The graph layer is not where
+the computation goes.
+
+## Where the two readings disagree
+
+The `flips` column counts the pairs that a standard analysis would call
+significantly correlated and that the conditional reading does not
+(`rho` significant at 5%, partial correlation not). These are exactly the
+conclusions that change depending on which engine you ran.
+
+```{r flips, eval = EVAL}
+flips <- do.call(rbind, Map(function(pt, nm) {
+  f <- pt[pt$rho_p < .05 & pt$pcor_p >= .05, , drop = FALSE]
+  if (!nrow(f)) NULL else cbind(dataset = nm, f)
+}, pts, names(pts)))
+knitr::kable(flips, digits = 3, row.names = FALSE)
+```
+
+Each row is a pair of responses that look associated until the other responses
+are held fixed. `VECT-ANL` in `marks` is the textbook case: a marginal
+correlation of 0.49, significant at 5%, that falls to 0.08 and loses all
+significance once algebra is conditioned on. `Ndoc-Nhosp` in `ahs` behaves the
+same way with 5190 observations, so this is not a small-sample artifact. And in
+`Hunting` the single correlation between the two prey counts is significant
+marginally and not conditionally, which is why GBIC keeps no edge at all.
+
+The table is deliberately conservative: it counts only pairs that cross the
+significance threshold in one reading and not in the other. `MECH-ANL` in
+`marks` does not appear in it, because with `n = 88` its marginal correlation of
+0.41 already fails to reach 5% on its own (`rho_p` close to 0.115), and yet its
+partial correlation is `-0.002`, the largest collapse in this comparison.
+"Not enough evidence of a marginal association" and "no conditional
+association" are different claims, and only the second engine is in a position
+to make the second one.
+
+The `shrink` column generalizes this beyond the significance threshold: it is
+the fraction of the marginal association that does *not* survive conditioning.
+
+```{r shrink, eval = EVAL}
+shr <- do.call(rbind, Map(function(pt, nm) data.frame(
+  dataset = nm,
+  pairs = nrow(pt),
+  median_shrink = sprintf("%.0f%%", 100 * stats::median(pt$shrink)),
+  max_shrink = sprintf("%.0f%%", 100 * max(pt$shrink)),
+  marg_signif = sum(pt$rho_p < .05),
+  cond_signif = sum(pt$pcor_p < .05),
+  row.names = NULL), pts, names(pts)))
+knitr::kable(shr, row.names = FALSE)
+```
+
+## The two matrices, side by side
+
+`marks` shows the contrast most sharply, so it gets the full treatment: the
+marginal correlation matrix that the standard fit reports, and the partial
+correlation matrix the graph layer reads off the precision.
+
+```{r marks-panels, eval = EVAL && HAS_BN, fig.width = 7, fig.height = 3.8}
+p <- fits$marks; nm <- p$g$graph$response_names
+Rmarg <- rho_matrix(pts$marks$rho, nm)
+Rpart <- mc_partial_cor(p$g)
+op <- par(mfrow = c(1, 2), mar = c(1, 4, 4, 1))
+show_matrix(Rmarg, "mcglm: marginal correlation")
+show_matrix(Rpart, "mcglmgraph: partial correlation")
+par(op)
+```
+
+The left panel is uniformly warm: every one of the ten pairs correlates between
+0.39 and 0.71, which is the honest summary of what the standard fit found. The
+right panel is where the structure appears. The `MECH`-`VECT`-`ALG` block and the
+`ALG`-`ANL`-`STAT` block survive; the four cells linking `{MECH, VECT}` to
+`{ANL, STAT}` collapse to roughly zero. Algebra separates the two groups.
+
+The same fit, three matrices, in the order the package computes them:
+
+```{r marks-matrices, eval = EVAL && HAS_BN}
+round(p$g$graph$Sigma_b, 3)   # residual between-response covariance
+round(p$g$graph$K_b, 3)       # precision: the parametrized object
+round(Rpart, 3)               # partial correlations read off K_b
+```
+
+`K_b` is the object the GGM layer actually parametrizes, as a linear combination
+of canonical bases. Its off-diagonal entries carry the conditional structure
+directly, and they line up exactly with the selection: the four smallest in
+magnitude are `MECH-ANL` (0.003), `VECT-STAT` (-0.038), `MECH-STAT` (-0.044) and
+`VECT-ANL` (-0.157), and those four are precisely the four edges GBIC drops. The
+covariance `Sigma_b` shows none of this. Its entries for the same four pairs run
+from 0.385 to 0.480 against 0.541 to 0.703 for the six that are kept: the
+dropped pairs are the smaller ones, but nothing there is remotely near zero, and
+no threshold on `Sigma_b` separates the two groups the way the inverse does. The
+difference is categorical only in `K_b`, which is why that is the object the
+layer parametrizes.
+
+## Selected structures
+
+```{r supports, eval = EVAL}
+supp <- do.call(rbind, Map(function(p, sel) {
+  rn <- p$g$graph$response_names; e <- sel$edges
+  data.frame(
+    dataset = p$name,
+    support = if (is.null(e) || !nrow(e)) "(empty)" else
+      paste(apply(e, 1, function(r) paste(rn[r[1]], rn[r[2]], sep = "-")),
+            collapse = ", "),
+    row.names = NULL, stringsAsFactors = FALSE)
+}, fits, sels))
+knitr::kable(supp, row.names = FALSE)
+```
+
+Three of these are readable as substantive claims rather than parameter counts.
+`marks` recovers the butterfly with algebra at the center. `soil` returns the
+chain `CA - MG - K`: magnesium separates calcium from potassium, and the direct
+`CA-K` link is not needed once it is held fixed. `NewBorn` keeps `HR-RR`, the
+cardio-respiratory coupling, and drops both links to oxygen saturation.
+
+```{r networks, eval = EVAL, fig.width = 7, fig.height = 5.2}
+op <- par(mfrow = c(2, 3))
+for (nm in names(sels)) mc_plot_network(sels[[nm]]$fit, edge_labels = TRUE)
+par(op)
+```
+
+## Parsimony, and whether it is paid for
+
+Dropping edges is only a gain if the criterion agrees. GBIC on the saturated
+graph against GBIC on the selected one:
+
+```{r criteria, eval = EVAL}
+crit <- do.call(rbind, Map(function(p, s) {
+  sat <- unname(mc_compute_criterion(p$g, "gbic"))
+  sel <- unname(mc_compute_criterion(s$fit, "gbic"))
+  data.frame(dataset = p$name, npar_sat = p$g$graph$npar,
+             npar_sel = s$fit$graph$npar, gbic_sat = sat, gbic_sel = sel,
+             delta = sel - sat, row.names = NULL)
+}, fits, sels))
+knitr::kable(crit, digits = 2, row.names = FALSE)
+```
+
+`delta` is negative on all six: every selected structure improves GBIC over the
+saturated one. The parsimony is not imposed, it is preferred.
+
+## What the graph layer does not give you
+
+The columns above are the gains. The limits are as follows, and they are not
+small print.
+
+* **No improvement in the mean model.** `beta_gap = 0` is not a rounding
+  statement. The regression estimates, their standard errors and every inherited
+  method (`vcov`, `gof`, `pAIC`, `pBIC`, `plogLik`) refer to the first-stage fit
+  and are untouched.
+* **The uncertainty is conditional on the estimated residuals.** The
+  delta-method standard errors in `pcor_se` treat the first-stage fit as given.
+  `mc_partial_cor_delta(variability = "two_stage")` propagates its uncertainty,
+  and so does `mc_vcov_graph(type = "two_stage")` for the graph parameters. For
+  the partial correlations, the empirical and the two-stage variances agree to
+  first order when the mean is correctly specified, the conditional covariance
+  of the Pearson residuals does not change with the covariates and the support
+  contains the true one. With count responses the residual correlation can
+  vary with the mean, the agreement is then only approximate, and the
+  two-stage form is the one to report.
+* **A selected support is not a tested support.** `mc_graph_stepwise()` searches,
+  and the p-values reported afterwards on the selected graph are descriptive.
+  Nothing here delivers post-selection inference.
+* **"Conditional association" is second-order.** A missing edge means absence of
+  second-order conditional association. It coincides with full conditional
+  independence under joint normality, or on the latent scale of a Gaussian
+  copula, not in general.
+* **The graph is on residuals.** Edges describe residual conditional association
+  among responses after the marginal means are removed, which is a different
+  object from raw marginal association among the responses themselves.
+
+## Summary
+
+Across six datasets, four variance functions and sample sizes from 75 to 5190,
+the comparison is consistent. The two engines return **identical** mean models,
+at a second-stage cost measured in fractions of a second. What the graph layer
+adds is a different reading of the same residual second-order object: partial
+instead of marginal correlations, with standard errors and tests attached, a
+selectable support that GBIC prefers to the saturated one on every dataset, and
+in four of the six cases at least one pair whose apparent association does not
+survive conditioning.
+
+Whether that reading is the one you want is a modeling question. If the
+between-response correlations are nuisance, the standard fit already gives you
+everything. If they are the object of interest, the marginal correlation vector
+is the wrong summary, and the rows of the `flips` table above are what it costs
+to use it anyway.
+
+## References
+
+Bonat, W. H. and Jorgensen, B. (2016). Multivariate covariance generalized
+linear models. *Journal of the Royal Statistical Society: Series C*, 65(5),
+649--675. <doi:10.1111/rssc.12145>
+
+Bonat, W. H. (2018). Multiple response variables regression models in R: the
+mcglm package. *Journal of Statistical Software*, 84(4), 1--30.
+<doi:10.18637/jss.v084.i04>

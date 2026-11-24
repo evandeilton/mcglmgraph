@@ -1,0 +1,48 @@
+Package: mcglmgraph
+Type: Package
+Title: Graphical Multivariate Covariance Generalized Linear Models
+Version: 0.8.2
+Authors@R: c(
+    person(c("Jose", "Evandeilton"), "Lopes", role = c("aut", "cre"),
+           email = "evandeilton@gmail.com"),
+    person(c("Wagner", "Hugo"), "Bonat", role = c("aut", "cph"),
+           email = "wbonat@ufpr.br",
+           comment = "Author of the MCGLM framework that this package extends"))
+Description: Graph-structured modeling of the covariance between responses in
+    Multivariate Covariance Generalized Linear Models (MCGLM), for Gaussian
+    and non-Gaussian responses. The method, MCGLM-Graph, is fitted in two
+    stages. The first stage fits the marginal MCGLM and extracts its Pearson
+    residuals. The second stage imposes a graph on the covariance of these
+    residuals and estimates the graph parameters with the Pearson estimating
+    functions of the MCGLM, without a joint likelihood. Three layers are
+    available: Gaussian graphical models (GGM), whose precision matrix is a
+    linear predictor and whose zeros are null partial correlations; directed
+    acyclic graphs (DAG), based on the modified Cholesky decomposition of
+    Pourahmadi (1999) <doi:10.1093/biomet/86.3.677> under a fixed ordering of
+    the responses; and completed partially directed acyclic graphs (CPDAG),
+    learned by partial-correlation tests or by greedy equivalence search. A
+    missing edge is read as absence of second-order conditional association,
+    which coincides with conditional independence under joint normality of
+    the residuals. Tools include structure selection by stepwise search, L1
+    penalization and information criteria adjusted by the effective
+    dimension, Wald tests, a variance that propagates the first-stage
+    uncertainty as in Murphy and Topel (1985)
+    <doi:10.1080/07350015.1985.10509471>, stability and bootstrap resampling,
+    and structure recovery metrics. Analytical derivatives are implemented in
+    C++ via 'RcppArmadillo'. The MCGLM framework is described in Bonat and
+    Jorgensen (2016) <doi:10.1111/rssc.12145> and Bonat (2018)
+    <doi:10.18637/jss.v084.i04>.
+URL: https://github.com/evandeilton/mcglmgraph,
+    https://evandeilton.github.io/mcglmgraph/
+BugReports: https://github.com/evandeilton/mcglmgraph/issues
+Depends: R (>= 4.1.0)
+Imports: stats, graphics, methods, utils, parallel, Matrix, Rcpp (>= 1.0.0), mcglm
+LinkingTo: Rcpp, RcppArmadillo
+Suggests: testthat (>= 3.0.0), knitr, rmarkdown, bnlearn, MASS, numDeriv, callr
+SystemRequirements: C++17
+License: GPL-3
+Encoding: UTF-8
+Language: en-US
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.0

@@ -1,0 +1,23 @@
+# RStudio session state
+.Rproj.user/
+
+# R session junk
+.Rhistory
+.RData
+.Ruserdata
+
+# compiled objects
+src/*.o
+src/*.so
+src/*.dll
+
+# build output
+inst/doc/
+docs/
+*.tar.gz
+*.Rcheck/
+
+# Dropbox sync artifacts: never edit, never commit
+*Cópia em conflito*
+*Copia em conflito*
+*conflicted copy*

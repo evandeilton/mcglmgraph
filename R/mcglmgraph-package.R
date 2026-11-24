@@ -1,0 +1,134 @@
+#' mcglmgraph: Graphical Multivariate Covariance Generalized Linear Models
+#'
+#' Graph-structured covariance between responses for Multivariate Covariance
+#' Generalized Linear Models (MCGLM; Bonat and Jorgensen, 2016), fitted by
+#' two-stage residual analysis. The method is called MCGLM-Graph.
+#'
+#' @section Two stages:
+#' The first stage fits the marginal MCGLM, that is, the mean and dispersion
+#' structure of each response, through \code{mcglm::mcglm()}, and extracts the
+#' standardized Pearson residuals. The second stage imposes a graph on the
+#' between-response covariance \eqn{\Sigma_b} of these residuals and estimates
+#' the graph parameters with the second-order (Pearson) estimating functions of
+#' the MCGLM, with analytical derivatives implemented in C++ through
+#' \pkg{RcppArmadillo}. No joint likelihood is used. The regression
+#' coefficients are those of the first stage. Graph edges therefore describe
+#' residual association among responses after the marginal means are removed.
+#' Variances of the graph parameters are conditional on the first stage unless
+#' the two-stage variance, which propagates the first-stage uncertainty
+#' (Murphy and Topel, 1985), is requested (\code{\link{mc_vcov_graph}}).
+#'
+#' @section Three layers:
+#' \describe{
+#'   \item{GGM}{Gaussian graphical model. The precision matrix follows a
+#'     linear predictor on known symmetric basis matrices,
+#'     \eqn{K_b = \Sigma_b^{-1} = \sum_d \eta_d Z_d}. A zero off-diagonal
+#'     entry is a null partial correlation (Lauritzen, 1996), that is, absence
+#'     of second-order conditional association between two responses given the
+#'     others. This coincides with conditional independence only under joint
+#'     normality of the analyzed residuals.}
+#'   \item{DAG}{Directed acyclic graph. The modified Cholesky (LDL)
+#'     decomposition (Pourahmadi, 1999)
+#'     \eqn{\Sigma_b = T^{-1} D (T^{-1})^\top} under a fixed
+#'     ordering of the responses, with \eqn{T} unit lower triangular and
+#'     \eqn{D} diagonal, guarantees positive definiteness. A causal reading
+#'     requires a substantively justified ordering and further assumptions.}
+#'   \item{CPDAG}{Completed partially directed acyclic graph, the Markov
+#'     equivalence class of DAGs. The skeleton is learned by
+#'     partial-correlation tests and the identifiable edges are oriented by
+#'     v-structures and Meek's rules (Spirtes, Glymour and Scheines, 2000;
+#'     Meek, 1995); alternatively, the class is searched by greedy equivalence
+#'     search (GES; Chickering, 2002).}
+#' }
+#'
+#' @section Functions by task:
+#' \describe{
+#'   \item{Specify and fit}{\code{\link{mc_between_graph}},
+#'     \code{\link{mcglm_graph}} (alias \code{mcglmgraph()}).}
+#'   \item{Read the graph layer}{\code{\link{mc_partial_cor}},
+#'     \code{\link{mc_partial_cor_delta}},
+#'     \code{\link{mc_dag_coefficients}},
+#'     \code{\link{mc_get_graph}},
+#'     \code{\link{mc_plot_network}}.}
+#'   \item{Inference on the graph layer}{\code{\link{mc_vcov_graph}},
+#'     \code{\link{mc_two_stage_available}},
+#'     \code{\link{mc_wald_graph}},
+#'     \code{\link{mc_test_independence}},
+#'     \code{\link{mc_test_adequacy}},
+#'     \code{\link{mc_edge_scores}}.}
+#'   \item{Compare supports}{\code{\link{mc_compute_criterion}},
+#'     \code{\link{mc_graph_ploglik}},
+#'     \code{\link{mc_graph_cv}}.}
+#'   \item{Select an undirected graph}{\code{\link{mc_graph_stepwise}},
+#'     \code{\link{mc_select_lambda}},
+#'     \code{\link{mc_graph_penalized}}.}
+#'   \item{Discover a directed structure}{\code{\link{mc_graph_pipeline}},
+#'     \code{\link{mc_ges}},
+#'     \code{\link{mc_pc_skeleton}},
+#'     \code{\link{mc_separating_sets}},
+#'     \code{\link{mc_find_vstructures}},
+#'     \code{\link{mc_orient_meek}},
+#'     \code{\link{mc_residual_df}},
+#'     \code{\link{mc_skeleton_to_bnlearn}}.}
+#'   \item{Equivalence classes and directed fits}{\code{\link{mc_class_members}},
+#'     \code{\link{mc_class_coefficients}},
+#'     \code{\link{mc_dag_closed_root}}.}
+#'   \item{Stability and resampling}{\code{\link{mc_graph_stability}},
+#'     \code{\link{mc_cpdag_stability}},
+#'     \code{\link{mc_graph_bootstrap}}.}
+#'   \item{Check against a known truth}{\code{\link{mc_structure_metrics}},
+#'     \code{\link{mc_cpdag_metrics}},
+#'     \code{\link{mc_true_cpdag}},
+#'     \code{\link{mc_sid}}.}
+#'   \item{Covariance algebra}{\code{\link{mc_precision_bases}},
+#'     \code{\link{mc_build_precision}},
+#'     \code{\link{mc_precision_to_covariance}},
+#'     \code{\link{mc_precision_derivatives}},
+#'     \code{\link{mc_spd_line_search}},
+#'     \code{\link{mc_check_spd}},
+#'     \code{\link{mc_build_T_matrix}},
+#'     \code{\link{mc_build_D_matrix}},
+#'     \code{\link{mc_cholesky_to_covariance}},
+#'     \code{\link{mc_cholesky_to_precision}},
+#'     \code{\link{mc_cholesky_derivatives}},
+#'     \code{\link{mc_dag_sensitivity}},
+#'     \code{\link{mc_dag_unit_diagonal}},
+#'     \code{\link{mc_build_sigma_between_graph}}.}
+#' }
+#' Selection results have \code{print}, \code{summary} and \code{plot}
+#' methods (\code{\link{mcg_selection-methods}}).
+#'
+#' @references
+#' Bonat, W. H. and Jorgensen, B. (2016). Multivariate covariance generalized
+#' linear models. \emph{Journal of the Royal Statistical Society: Series C},
+#' 65(5), 649--675. \doi{10.1111/rssc.12145}
+#'
+#' Bonat, W. H. (2018). Multiple response variables regression models in R:
+#' the mcglm package. \emph{Journal of Statistical Software}, 84(4), 1--30.
+#' \doi{10.18637/jss.v084.i04}
+#'
+#' Chickering, D. M. (2002). Optimal structure identification with greedy
+#' search. \emph{Journal of Machine Learning Research}, 3, 507--554.
+#'
+#' Lauritzen, S. L. (1996). \emph{Graphical Models}. Clarendon Press, Oxford.
+#'
+#' Meek, C. (1995). Causal inference and causal explanation with background
+#' knowledge. In \emph{Proceedings of the Eleventh Conference on Uncertainty
+#' in Artificial Intelligence}, 403--410.
+#'
+#' Murphy, K. M. and Topel, R. H. (1985). Estimation and inference in two-step
+#' econometric models. \emph{Journal of Business & Economic Statistics}, 3(4),
+#' 370--379. \doi{10.1080/07350015.1985.10509471}
+#'
+#' Pourahmadi, M. (1999). Joint mean-covariance models with applications to
+#' longitudinal data: unconstrained parameterisation. \emph{Biometrika},
+#' 86(3), 677--690. \doi{10.1093/biomet/86.3.677}
+#'
+#' Spirtes, P., Glymour, C. and Scheines, R. (2000). \emph{Causation,
+#' Prediction, and Search}, 2nd edition. MIT Press, Cambridge, Massachusetts.
+#'
+#' @useDynLib mcglmgraph, .registration = TRUE
+#' @importFrom Rcpp sourceCpp
+#' @importFrom Matrix bdiag
+#' @keywords internal
+"_PACKAGE"

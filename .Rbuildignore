@@ -1,0 +1,12 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.Rhistory
+\(C.*pia em conflito.*\)
+^.*\.o$
+^.*\.so$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^vignettes/articles$
+^\.github$
+^LICENSE\.md$
