@@ -90,14 +90,14 @@ Rcpp::List cpp_check_spd(const arma::mat& K, double tol = 1e-10) {
 //' @param d Newton direction.
 //' @param bases numeric cube R x R x q_G of base matrices Z_d, with q_G the
 //'   number of graph parameters.
-//' @param max_halvings maximum number of step halvings (default 20).
+//' @param max_halvings maximum number of step halvings (default 30).
 //' @param tol tolerance on the smallest eigenvalue (default 1e-10).
 //' @return list with eta_new (last point tried), step_size, halvings (number
 //'   of halvings performed) and is_spd (whether eta_new passed the test).
 //' @keywords internal
 // [[Rcpp::export]]
 Rcpp::List cpp_spd_line_search(const arma::vec& eta, const arma::vec& d,
-                               const arma::cube& bases, int max_halvings = 20,
+                               const arma::cube& bases, int max_halvings = 30,
                                double tol = 1e-10) {
   double alpha = 1.0;
   int h = 0;
@@ -152,9 +152,12 @@ arma::mat cpp_partial_cor(const arma::mat& K) {
 //' (gamma, delta) without changing the formula.
 //'
 //' K is assumed positive definite and is not checked. For a pair with
-//' K_ii K_jj <= 0 the kernel returns rho = 0, a non-finite gradient and a
-//' variance of zero. A quadratic form g' V g that is negative or not finite is
-//' returned as zero.
+//' K_ii K_jj not strictly positive or not finite, the partial correlation is
+//' undefined: pcor, every entry of its gradient row and its variance are NA,
+//' and the other pairs are unaffected. A quadratic form g' V g below zero by no
+//' more than 1e-10 times sum |g_a| |V_ab| |g_b| is rounding error and is
+//' returned as zero; a more negative one means V is not positive semidefinite
+//' and is returned as NA, as is a non-finite one.
 //'
 //' @param K the R x R precision matrix of the fitted layer.
 //' @param Sdot list of q_G matrices dSigma_b/dtheta_d, one per graph parameter.
@@ -179,13 +182,23 @@ Rcpp::List cpp_pcor_delta(const arma::mat& K, const Rcpp::List& Sdot,
     Kdot[d] = 0.5 * (Kd + Kd.t());
   }
 
+  // |V|, shared by every pair to scale the rounding tolerance
+  const arma::mat Vabs = arma::abs(V);
+
   arma::vec rho(q), var(q);
   arma::mat G(q, D, arma::fill::zeros);
   for (arma::uword e = 0; e < q; ++e) {
     arma::uword i = pairs(e, 0) - 1, j = pairs(e, 1) - 1;
     double kii = K(i, i), kjj = K(j, j);
-    double den = std::sqrt(kii * kjj);
-    double r = (den > 0.0) ? -K(i, j) / den : 0.0;
+    double prod = kii * kjj;
+    // Undefined partial correlation: NA for the estimate, gradient and variance
+    if (!(prod > 0.0) || !std::isfinite(prod)) {
+      rho(e) = NA_REAL; var(e) = NA_REAL;
+      for (arma::uword d = 0; d < D; ++d) G(e, d) = NA_REAL;
+      continue;
+    }
+    double den = std::sqrt(prod);
+    double r = -K(i, j) / den;
     rho(e) = r;
     for (arma::uword d = 0; d < D; ++d) {
       double g = -Kdot[d](i, j) / den
@@ -194,7 +207,18 @@ Rcpp::List cpp_pcor_delta(const arma::mat& K, const Rcpp::List& Sdot,
     }
     arma::rowvec ge = G.row(e);
     double v = arma::as_scalar(ge * V * ge.t());
-    var(e) = (v > 0.0) ? v : 0.0;
+    // Scale of the terms of the quadratic form, to judge a negative value
+    arma::rowvec ga = arma::abs(ge);
+    double scale = arma::as_scalar(ga * Vabs * ga.t());
+    if (!std::isfinite(v) || !std::isfinite(scale)) {
+      var(e) = NA_REAL;
+    } else if (v >= 0.0) {
+      var(e) = v;
+    } else if (v >= -1e-10 * scale) {
+      var(e) = 0.0;   // negative by rounding only
+    } else {
+      var(e) = NA_REAL;   // V is not positive semidefinite
+    }
   }
   return Rcpp::List::create(_["pcor"] = rho, _["variance"] = var,
                             _["gradient"] = G);

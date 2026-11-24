@@ -1,3 +1,21 @@
+# mcglmgraph 0.8.3
+
+* `mc_spd_line_search()`: the default `max_halvings` is 30, the value
+  `mcglm_graph()` uses internally.
+* `mc_partial_cor_delta()`: a pair outside the specified support (an absent
+  GGM edge, or a pair outside the moral graph of a DAG) returns `pcor = 0` and
+  `NA` for `se`, `statistic`, `p_value`, `lower` and `upper`, and its row of the
+  `"gradient"` attribute is `NA`. Rows of present pairs are unchanged.
+* `mc_partial_cor_delta()`: a pair whose partial correlation is undefined
+  (a nonpositive product of precision diagonals) returns `NA` in `pcor` and in
+  the inference columns instead of 0. A variance that is negative beyond
+  rounding, because the covariance of the parameters is not positive
+  semidefinite, gives `NA` rather than 0.
+* Renamed, with no alias: the attribute `centre` of
+  `mc_vcov_graph(type = "two_stage")` is now `center`, and the column
+  `prop_centre` of the v-structure tables of `mc_find_vstructures()` and
+  `mc_graph_pipeline()` is now `prop_center`.
+
 # mcglmgraph 0.8.2
 
 * `coef()` on an `mcglm_graph` object accepts the `type` values of

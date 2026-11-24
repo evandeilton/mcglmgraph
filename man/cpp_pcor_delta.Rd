@@ -37,8 +37,11 @@ Z_d; in the DAG layer it supplies the corresponding directions for
 (gamma, delta) without changing the formula.
 
 K is assumed positive definite and is not checked. For a pair with
-K_ii K_jj <= 0 the kernel returns rho = 0, a non-finite gradient and a
-variance of zero. A quadratic form g' V g that is negative or not finite is
-returned as zero.
+K_ii K_jj not strictly positive or not finite, the partial correlation is
+undefined: pcor, every entry of its gradient row and its variance are NA,
+and the other pairs are unaffected. A quadratic form g' V g below zero by no
+more than 1e-10 times sum |g_a| |V_ab| |g_b| is rounding error and is
+returned as zero; a more negative one means V is not positive semidefinite
+and is returned as NA, as is a non-finite one.
 }
 \keyword{internal}

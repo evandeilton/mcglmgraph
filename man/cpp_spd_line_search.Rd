@@ -4,7 +4,7 @@
 \alias{cpp_spd_line_search}
 \title{Backtracking line search preserving positive-definiteness (C++ kernel)}
 \usage{
-cpp_spd_line_search(eta, d, bases, max_halvings = 20L, tol = 1e-10)
+cpp_spd_line_search(eta, d, bases, max_halvings = 30L, tol = 1e-10)
 }
 \arguments{
 \item{eta}{current parameter vector.}
@@ -14,7 +14,7 @@ cpp_spd_line_search(eta, d, bases, max_halvings = 20L, tol = 1e-10)
 \item{bases}{numeric cube R x R x q_G of base matrices Z_d, with q_G the
 number of graph parameters.}
 
-\item{max_halvings}{maximum number of step halvings (default 20).}
+\item{max_halvings}{maximum number of step halvings (default 30).}
 
 \item{tol}{tolerance on the smallest eigenvalue (default 1e-10).}
 }

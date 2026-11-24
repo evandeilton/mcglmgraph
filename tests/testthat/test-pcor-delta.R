@@ -167,7 +167,7 @@ test_that("mc_partial_cor_delta returns the documented contract", {
   expect_true(all(rob$se >= 0))
 })
 
-test_that("pairs outside the support are structural zeros with zero standard error", {
+test_that("pairs outside the support are structural zeros without inference", {
   skip_if_not_installed("MASS")
   set.seed(20260808)
   n <- 300
@@ -181,9 +181,9 @@ test_that("pairs outside the support are structural zeros with zero standard err
 
   outside <- !res$present
   expect_true(any(outside))
-  expect_true(all(abs(res$pcor[outside]) < 1e-12))
-  expect_true(all(res$se[outside] < 1e-12))
-  expect_true(all(is.na(res$statistic[outside])))
+  expect_true(all(res$pcor[outside] == 0))
+  for (col in c("se", "statistic", "p_value", "lower", "upper"))
+    expect_true(all(is.na(res[[col]][outside])), info = col)
   ## on the edges of the support the standard error is strictly positive
   expect_true(all(res$se[res$present] > 0))
 })
@@ -213,11 +213,12 @@ test_that("DAG precision support follows moralization rather than arrow adjacenc
   expect_gt(abs(res$pcor[co_parents]), 1e-8)
   expect_gt(res$se[co_parents], 0)
 
-  ## Node 4 is isolated even after moralization, hence this remains an exact
-  ## precision zero with zero gradient and standard error.
+  ## Node 4 is isolated even after moralization: a structural zero with no
+  ## inference.
   expect_false(res$present[outside_moral])
-  expect_equal(res$pcor[outside_moral], 0, tolerance = 1e-12)
-  expect_equal(res$se[outside_moral], 0, tolerance = 1e-12)
+  expect_identical(res$pcor[outside_moral], 0)
+  expect_true(is.na(res$se[outside_moral]))
+  expect_true(is.na(res$p_value[outside_moral]))
 })
 
 test_that("mc_partial_cor_delta validates its arguments", {
@@ -351,4 +352,280 @@ test_that("with gamma residuals the model-based form departs and the empirical o
   # ... and the two empirical forms still coincide, as the gradients of the
   # partial correlations annihilate the cross sensitivity
   expect_equal(t2$se, e$se, tolerance = 1e-8)
+})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# UNDEFINED PAIRS AND NEGATIVE VARIANCES IN THE KERNEL
+# ─────────────────────────────────────────────────────────────────────────────
+
+kernel_fixture <- function() {
+  bases <- mc_precision_bases(3L)
+  eta <- c(2, 2, 2, -.5, -.3, .2)
+  K <- mc_build_precision(eta, bases)
+  Sdot <- mc_precision_derivatives(mc_precision_to_covariance(K)$Sigma_b, bases)
+  pairs <- t(utils::combn(3L, 2L)); storage.mode(pairs) <- "integer"
+  list(K = K, Sdot = Sdot, pairs = pairs, V = diag(length(eta)), eta = eta)
+}
+
+test_that("an undefined pair gives NA and leaves the other pairs unchanged", {
+  fx <- kernel_fixture()
+  ref <- mcglmgraph:::cpp_pcor_delta(fx$K, fx$Sdot, fx$pairs, fx$V)
+  for (bad in c(0, -1, Inf, NaN)) {
+    K <- fx$K
+    K[1, 1] <- bad                   # pairs (1,2) and (1,3) are undefined
+    out <- mcglmgraph:::cpp_pcor_delta(K, fx$Sdot, fx$pairs, fx$V)
+    und <- c(1L, 2L)
+    expect_true(all(is.na(out$pcor[und])))
+    expect_true(all(is.na(out$variance[und])))
+    expect_true(all(is.na(out$gradient[und, ])))
+    ## the defined pair equals the same pair computed alone on that K
+    alone <- mcglmgraph:::cpp_pcor_delta(K, fx$Sdot, fx$pairs[3L, , drop = FALSE],
+                                         fx$V)
+    expect_identical(out$pcor[3L], as.numeric(alone$pcor))
+    expect_identical(out$variance[3L], as.numeric(alone$variance))
+    expect_identical(out$gradient[3L, ], alone$gradient[1L, ])
+  }
+  ## a clean K is untouched
+  expect_false(anyNA(ref$pcor)); expect_false(anyNA(ref$variance))
+  expect_false(anyNA(ref$gradient))
+})
+
+test_that("rounding-size negative variance is 0 and a clear one is NA", {
+  fx <- kernel_fixture()
+  ref <- mcglmgraph:::cpp_pcor_delta(fx$K, fx$Sdot, fx$pairs, fx$V)
+  g <- ref$gradient[1L, ]
+  ## rank-one V = a a' with a orthogonal to g: the quadratic form is zero up to
+  ## rounding, whatever its sign
+  a <- c(g[2L], -g[1L], rep(0, length(g) - 2L))
+  o1 <- mcglmgraph:::cpp_pcor_delta(fx$K, fx$Sdot, fx$pairs, tcrossprod(a))
+  expect_false(anyNA(o1$variance))
+  expect_true(all(o1$variance >= 0))
+  expect_lt(o1$variance[1L], 1e-14)
+  ## V = -I is clearly not positive semidefinite
+  o2 <- mcglmgraph:::cpp_pcor_delta(fx$K, fx$Sdot, fx$pairs,
+                                    -diag(length(g)))
+  expect_true(all(is.na(o2$variance)))
+  expect_equal(o2$pcor, ref$pcor)
+  ## a covariance that is positive semidefinite gives g' V g >= 0
+  expect_true(all(ref$variance >= 0))
+  ## non-finite V gives NA, not an error
+  Vn <- fx$V; Vn[1, 1] <- NA_real_
+  o3 <- mcglmgraph:::cpp_pcor_delta(fx$K, fx$Sdot, fx$pairs, Vn)
+  expect_true(any(is.na(o3$variance)))
+})
+
+# ─────────────────────────────────────────────────────────────────────────────
+# STRUCTURAL ZEROS IN THE PUBLIC FUNCTION, AGAINST THE DEFINITION
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Reference delta-method table from the definition rho = -K_ij / sqrt(K_ii K_jj)
+# with a numerical gradient, independent of the package's own gradient.
+pcor_reference <- function(par, precision_of, V, pairs, level = 0.95) {
+  t(vapply(seq_len(nrow(pairs)), function(e) {
+    i <- pairs[e, 1L]; j <- pairs[e, 2L]
+    f <- function(p) {
+      K <- precision_of(p); -K[i, j] / sqrt(K[i, i] * K[j, j])
+    }
+    g <- numDeriv::grad(f, par)
+    se <- sqrt(drop(crossprod(g, V %*% g)))
+    rho <- f(par)
+    c(pcor = rho, se = se, statistic = rho / se,
+      p_value = 2 * stats::pnorm(-abs(rho / se)),
+      lower = rho - stats::qnorm(1 - (1 - level) / 2) * se,
+      upper = rho + stats::qnorm(1 - (1 - level) / 2) * se)
+  }, numeric(6)))
+}
+
+test_that("structural-zero rows of a sparse GGM carry 0 and NA inference", {
+  skip_if_not_installed("MASS"); skip_if_not_installed("numDeriv")
+  set.seed(20261124)
+  n <- 300
+  Y <- MASS::mvrnorm(n, rep(0, 4), diag(4))
+  d <- data.frame(y1 = Y[, 1], y2 = Y[, 2], y3 = Y[, 3], y4 = Y[, 4],
+                  x = rnorm(n))
+  edges <- rbind(c(1, 2), c(3, 4))
+  f <- mcglm_graph(list(y1~x, y2~x, y3~x, y4~x),
+                   between_graph = mc_between_graph("ggm", edges = edges),
+                   data = d)
+  res <- mc_partial_cor_delta(f)
+  bases <- mc_precision_bases(4L, edges = edges)
+  par <- f$graph$par
+  expect_equal(mc_build_precision(par, bases), unname(as.matrix(f$graph$K_b)),
+               ignore_attr = TRUE)
+  V <- as.matrix(mc_vcov_graph(f, type = "model"))
+  pairs <- t(utils::combn(4L, 2L))
+  ref <- pcor_reference(par, function(p) mc_build_precision(p, bases), V, pairs)
+
+  abs_row <- !res$present
+  expect_equal(sum(abs_row), 4L)
+  expect_true(all(res$pcor[abs_row] == 0))
+  for (col in c("se", "statistic", "p_value", "lower", "upper"))
+    expect_true(all(is.na(res[[col]][abs_row])), info = col)
+  for (col in colnames(ref))
+    expect_equal(res[[col]][!abs_row], ref[!abs_row, col],
+                 tolerance = 1e-5, info = col)
+
+  ## gradient rows: NA for structural zeros, the numerical gradient otherwise
+  G <- attr(res, "gradient")
+  expect_true(all(is.na(G[abs_row, ])))
+  for (e in which(!abs_row)) {
+    i <- pairs[e, 1L]; j <- pairs[e, 2L]
+    g_num <- numDeriv::grad(function(p) {
+      K <- mc_build_precision(p, bases); -K[i, j] / sqrt(K[i, i] * K[j, j])
+    }, par)
+    expect_equal(G[e, ], g_num, tolerance = 1e-7)
+  }
+
+  ## the Fisher interval keeps the same structure
+  fi <- mc_partial_cor_delta(f, interval = "fisher")
+  expect_true(all(is.na(fi$lower[abs_row])) && all(is.na(fi$upper[abs_row])))
+  expect_false(anyNA(fi$lower[!abs_row]))
+})
+
+test_that("structural-zero rows of a DAG carry 0 and NA inference", {
+  skip_if_not_installed("numDeriv")
+  spec <- mc_between_graph("dag", edges = rbind(c(1, 3), c(2, 3)),
+                           ordering = 1:4)
+  theta <- c(.6, -.5, 1, 1, 1, 1)
+  built <- mc_build_sigma_between_graph(theta, 4, spec, inverse = TRUE)
+  fit <- structure(
+    list(graph = list(type = "dag", R = 4L, spec = spec, par = theta,
+                      K_b = built$Kb, Dlist = built$D_Sigmab,
+                      vcov = diag(length(theta)), npar = length(theta),
+                      response_names = paste0("y", 1:4))),
+    class = "mcglm_graph")
+  res <- mc_partial_cor_delta(fit)
+  pairs <- t(utils::combn(4L, 2L))
+  precision_of <- function(p)
+    mc_build_sigma_between_graph(p, 4, spec, inverse = TRUE)$Kb
+  ref <- pcor_reference(theta, precision_of, as.matrix(mc_vcov_graph(fit)),
+                        pairs)
+  zero <- !res$present
+  expect_equal(sum(zero), 3L)            # pairs (1,4), (2,4), (3,4)
+  ## the married pair (1,2) is in the moral graph and keeps its inference
+  expect_true(res$present[1L])
+  expect_false(anyNA(res[1L, c("pcor", "se", "statistic", "p_value")]))
+  G <- attr(res, "gradient")
+  expect_true(all(is.na(G[zero, ])))
+  expect_false(anyNA(G[!zero, ]))
+  expect_true(all(res$pcor[zero] == 0))
+  for (col in c("se", "statistic", "p_value", "lower", "upper"))
+    expect_true(all(is.na(res[[col]][zero])), info = col)
+  for (col in colnames(ref))
+    expect_equal(res[[col]][!zero], ref[!zero, col], tolerance = 1e-5,
+                 info = col)
+})
+
+test_that("the rounding tolerance is relative to the scale of the quadratic form", {
+  fx <- kernel_fixture()
+  ref <- mcglmgraph:::cpp_pcor_delta(fx$K, fx$Sdot, fx$pairs, fx$V)
+  g <- ref$gradient[1L, ]
+  a <- c(g[2L], -g[1L], rep(0, length(g) - 2L))      # orthogonal to g
+  P <- tcrossprod(a)
+  ## V = P - eps I has g' V g = -eps |g|^2; eps sets the ratio to the scale
+  ratio_of <- function(eps) {
+    V <- P - eps * diag(length(g))
+    -drop(g %*% V %*% g) / drop(abs(g) %*% abs(V) %*% abs(g))
+  }
+  unit <- drop(abs(g) %*% abs(P) %*% abs(g)) / sum(g^2)
+  eps_small <- 1e-12 * unit; eps_large <- 1e-8 * unit   # around the 1e-10 limit
+  expect_gt(ratio_of(eps_small), 1e-13)
+  expect_lt(ratio_of(eps_small), 1e-11)
+  expect_gt(ratio_of(eps_large), 1e-9)
+  for (s in c(1e-200, 1, 1e200)) {
+    v_small <- mcglmgraph:::cpp_pcor_delta(
+      fx$K, fx$Sdot, fx$pairs, s * (P - eps_small * diag(length(g))))$variance
+    v_large <- mcglmgraph:::cpp_pcor_delta(
+      fx$K, fx$Sdot, fx$pairs, s * (P - eps_large * diag(length(g))))$variance
+    expect_identical(v_small[1L], 0, info = s)
+    expect_true(is.na(v_large[1L]), info = s)
+    ## a negative definite V is never rounding, however small
+    v_neg <- mcglmgraph:::cpp_pcor_delta(fx$K, fx$Sdot, fx$pairs,
+                                         -s * fx$V)$variance
+    expect_true(all(is.na(v_neg)), info = s)
+    ## and a positive definite one keeps its variance, however small
+    v_pos <- mcglmgraph:::cpp_pcor_delta(fx$K, fx$Sdot, fx$pairs,
+                                         s * fx$V)$variance
+    expect_equal(v_pos, s * ref$variance, tolerance = 1e-12, info = s)
+    expect_true(all(v_pos > 0), info = s)
+  }
+})
+
+test_that("non-finite inputs of the kernel give NA and never a number", {
+  fx <- kernel_fixture()
+  ref <- mcglmgraph:::cpp_pcor_delta(fx$K, fx$Sdot, fx$pairs, fx$V)
+  for (bad in c(NA_real_, NaN, Inf, -Inf)) {
+    ## in V: the estimate and the gradient do not depend on V
+    Vb <- fx$V; Vb[2, 3] <- Vb[3, 2] <- bad
+    o <- mcglmgraph:::cpp_pcor_delta(fx$K, fx$Sdot, fx$pairs, Vb)
+    expect_true(all(is.na(o$variance)), info = bad)
+    expect_identical(o$pcor, ref$pcor)
+    expect_identical(o$gradient, ref$gradient)
+    ## in one derivative: the estimate stays, gradient column and variance go
+    Sb <- fx$Sdot; Sb[[2L]][1, 1] <- bad
+    o <- mcglmgraph:::cpp_pcor_delta(fx$K, Sb, fx$pairs, fx$V)
+    expect_identical(o$pcor, ref$pcor)
+    expect_true(all(is.na(o$gradient[, 2L])), info = bad)
+    expect_true(all(is.na(o$variance)), info = bad)
+  }
+  ## an off-diagonal NaN of K reaches every output of that pair
+  K <- fx$K; K[1, 2] <- K[2, 1] <- NaN
+  o <- mcglmgraph:::cpp_pcor_delta(K, fx$Sdot, fx$pairs[1L, , drop = FALSE],
+                                   fx$V)
+  expect_true(is.na(o$pcor)); expect_true(is.na(o$variance))
+})
+
+test_that("the gradient of defined pairs matches numerical differentiation", {
+  skip_if_not_installed("numDeriv")
+  fx <- kernel_fixture()
+  bases <- mc_precision_bases(3L)
+  out <- mcglmgraph:::cpp_pcor_delta(fx$K, fx$Sdot, fx$pairs, fx$V)
+  for (e in seq_len(nrow(fx$pairs))) {
+    i <- fx$pairs[e, 1L]; j <- fx$pairs[e, 2L]
+    f <- function(p) {
+      K <- mc_build_precision(p, bases); -K[i, j] / sqrt(K[i, i] * K[j, j])
+    }
+    expect_equal(out$pcor[e], f(fx$eta), tolerance = 1e-14)
+    expect_equal(out$gradient[e, ], numDeriv::grad(f, fx$eta), tolerance = 1e-8)
+  }
+})
+
+test_that("mc_partial_cor_delta carries an undefined pair and a bad covariance as NA", {
+  spec <- mc_between_graph("dag", edges = rbind(c(1, 3), c(2, 3)),
+                           ordering = 1:4)
+  theta <- c(.6, -.5, 1, 1, 1, 1)
+  built <- mc_build_sigma_between_graph(theta, 4, spec, inverse = TRUE)
+  make_fit <- function(K, V)
+    structure(
+      list(graph = list(type = "dag", R = 4L, spec = spec, par = theta,
+                        K_b = K, Dlist = built$D_Sigmab, vcov = V,
+                        npar = length(theta),
+                        response_names = paste0("y", 1:4))),
+      class = "mcglm_graph")
+  inference <- c("se", "statistic", "p_value", "lower", "upper")
+  ok <- mc_partial_cor_delta(make_fit(built$Kb, diag(length(theta))))
+
+  ## K_11 = 0: the present pairs (1,2) and (1,3) are undefined, (2,3) is not
+  K <- built$Kb; K[1, 1] <- 0
+  for (ci in c("wald", "fisher")) {
+    res <- expect_silent(
+      mc_partial_cor_delta(make_fit(K, diag(length(theta))), interval = ci))
+    und <- 1:2
+    expect_true(all(res$present[und]))
+    expect_true(all(is.na(unlist(res[und, c("pcor", inference)]))), info = ci)
+    expect_true(all(is.na(attr(res, "gradient")[und, ])))
+    expect_false(anyNA(res[4L, c("pcor", inference)]))        # pair (2,3)
+    ## structural zeros stay 0, whatever the diagonal
+    expect_identical(res$pcor[!res$present], c(0, 0, 0))
+  }
+
+  ## a covariance that is not positive semidefinite: estimate kept, no inference
+  for (ci in c("wald", "fisher")) {
+    res <- expect_silent(
+      mc_partial_cor_delta(make_fit(built$Kb, -diag(length(theta))),
+                           interval = ci))
+    expect_identical(res$pcor, ok$pcor)
+    expect_true(all(is.na(unlist(res[inference]))), info = ci)
+  }
 })

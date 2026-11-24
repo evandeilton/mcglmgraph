@@ -221,15 +221,18 @@ mc_plot_network <- function(fit, threshold = 0.05, edge_labels = FALSE) {
 #'
 #' @section Structural zeros:
 #' In the GGM layer, a pair outside the specified precision support is zero by
-#' construction: no parameter moves it, the gradient vanishes and the reported
-#' standard error is zero up to rounding error, so that the statistic of such a
-#' row is 0 or \code{NA} and carries no information. In the DAG layer, structural zeros of the
-#' precision are instead determined by the moral graph. In particular, two
+#' construction and has no sampling distribution. Its row reports
+#' \code{pcor = 0} and \code{NA} for \code{se}, \code{statistic},
+#' \code{p_value}, \code{lower} and \code{upper}, and its row of the
+#' \code{"gradient"} attribute is \code{NA}; this is decided from
+#' \code{present} and not from the size of the standard error. In the DAG
+#' layer, structural zeros of the precision are instead determined by the moral
+#' graph. In particular, two
 #' non-adjacent parents of a common child can have a nonzero precision entry
 #' even though no arrow joins them. Therefore \code{present} denotes adjacency
 #' in the specified GGM support or in the moral graph of the specified DAG.
-#' Rows with \code{present = FALSE} are structural constraints and should not
-#' be read as precise estimates of a null association; a \code{TRUE} value says
+#' Rows with \code{present = FALSE} are structural constraints, not estimates
+#' of a null association, and carry no inference; a \code{TRUE} value says
 #' only that the entry is structurally allowed, since parameter cancellation
 #' can still make it zero.
 #'
@@ -272,11 +275,19 @@ mc_plot_network <- function(fit, threshold = 0.05, edge_labels = FALSE) {
 #'   \code{pcor} (the partial correlation), \code{se} (standard error),
 #'   \code{statistic} (Wald statistic \code{pcor / se}, \code{NA} when the
 #'   standard error is exactly zero), \code{p_value} (two-sided, normal
-#'   reference) and \code{lower}, \code{upper} (interval bounds). The rows
+#'   reference) and \code{lower}, \code{upper} (interval bounds). A pair with
+#'   \code{present = FALSE} has \code{pcor = 0} and \code{NA} in \code{se},
+#'   \code{statistic}, \code{p_value}, \code{lower} and \code{upper}. A
+#'   pair whose partial correlation is undefined (a nonpositive product of
+#'   precision diagonals) has \code{NA} in \code{pcor} and in the same
+#'   columns. When the covariance of the parameters is not positive
+#'   semidefinite, \code{se} and what follows from it are \code{NA}. The rows
 #'   follow the pairs \eqn{(i, j)}, \eqn{i < j}, in lexicographic order. The
 #'   attribute \code{"gradient"} holds the matrix of gradients
 #'   \eqn{\mathbf g_{ij}}, with one row per pair and one column per graph
-#'   parameter, and the attributes \code{"variability"}, \code{"level"} and
+#'   parameter, the row being \code{NA} for a pair with
+#'   \code{present = FALSE} or an undefined partial correlation, and the
+#'   attributes \code{"variability"}, \code{"level"} and
 #'   \code{"interval"} record the choices used.
 #' @examples
 #' set.seed(1); n <- 300
@@ -337,11 +348,18 @@ mc_partial_cor_delta <- function(fit,
     lower <- rho - half; upper <- rho + half
   }
 
+  # Structural zeros: zero by construction, no sampling distribution
+  zero <- !present
+  rho[zero] <- 0
+  se[zero] <- z[zero] <- lower[zero] <- upper[zero] <- NA_real_
+  grad <- out$gradient
+  grad[zero, ] <- NA_real_
+
   res <- data.frame(
     response1 = g$response_names[pairs[, 1L]],
     response2 = g$response_names[pairs[, 2L]],
     present = present,
-    pcor = as.numeric(out$pcor),
+    pcor = rho,
     se = se,
     statistic = z,
     p_value = 2 * stats::pnorm(-abs(z)),
@@ -349,7 +367,7 @@ mc_partial_cor_delta <- function(fit,
     upper = upper,
     row.names = NULL, stringsAsFactors = FALSE
   )
-  attr(res, "gradient") <- out$gradient
+  attr(res, "gradient") <- grad
   attr(res, "variability") <- variability
   attr(res, "level") <- level
   attr(res, "interval") <- interval

@@ -578,7 +578,7 @@ plot.mcglm_graph <- function(x, type = c("network", "residuals"), ...) {
 #'   \code{"two_stage_method"}, the route taken, and either the factor
 #'   \code{"Q"} the shortcut applies, \eqn{[\mathbf K_b\dot{\boldsymbol
 #'   \Sigma}_{b,d}]_{rr}/(2m_r)}, with the averages \eqn{m_r} in
-#'   \code{"centre"}, or, for the full form, the cross sensitivity
+#'   \code{"center"}, or, for the full form, the cross sensitivity
 #'   \code{"B"}, the first-stage sensitivity \code{"A"}, both on the
 #'   accumulated scale, which \code{"sensitivity"} was used and its reciprocal
 #'   condition number \code{"sensitivity_rcond"}. The function refuses fits

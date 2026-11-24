@@ -181,7 +181,7 @@ mc_check_spd <- function(K, tol = 1e-10) {
 #' @param bases an object of class \code{"mcg_bases"} from
 #'   \code{\link{mc_precision_bases}}.
 #' @param max_halvings maximum number \eqn{k_{\max}} of step halvings
-#'   (default 20), so that at most \code{max_halvings + 1} steps are tried.
+#'   (default 30), so that at most \code{max_halvings + 1} steps are tried.
 #' @return A list with components
 #'   \describe{
 #'     \item{\code{eta_new}}{a one-column matrix with the last point tried,
@@ -206,7 +206,7 @@ mc_check_spd <- function(K, tol = 1e-10) {
 #' b <- mc_precision_bases(3)
 #' mc_spd_line_search(c(2,2,2,0,0,0), c(-.5,-.5,-.5,-.4,-.4,-.4), b)$halvings
 #' @export
-mc_spd_line_search <- function(eta_old, delta_eta, bases, max_halvings = 20L) {
+mc_spd_line_search <- function(eta_old, delta_eta, bases, max_halvings = 30L) {
   stopifnot(inherits(bases, "mcg_bases"))
   cpp_spd_line_search(as.numeric(eta_old), as.numeric(delta_eta),
                       bases$cube, as.integer(max_halvings))

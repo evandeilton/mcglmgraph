@@ -439,7 +439,7 @@
     C <- ts$scores
     if (!is.null(cluster)) C <- rowsum(C, u$unit, reorder = FALSE)
     extra$Q <- ts$Q
-    extra$centre <- as.numeric(ts$centre)
+    extra$center <- as.numeric(ts$center)
   } else {
     fl <- .two_stage_full_scores(fit, u$unit, u$n_units, sensitivity)
     C <- fl$scores

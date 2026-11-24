@@ -25,6 +25,24 @@ test_that("SPD line search keeps the precision positive definite", {
   expect_true(ls$is_spd)
 })
 
+test_that("the default SPD line search allows thirty halvings", {
+  b <- mc_precision_bases(3)
+  eta <- c(1, 1, 1, 0, 0, 0)
+  ## K = (1 - alpha 2^25) I is positive definite from alpha = 2^-26 on
+  step <- c(rep(-2^25, 3), 0, 0, 0)
+  ls <- mc_spd_line_search(eta, step, b)
+  expect_true(ls$is_spd)
+  expect_equal(ls$halvings, 26)
+  expect_equal(ls$step_size, 2^-26)
+  expect_equal(as.numeric(ls$eta_new), c(.5, .5, .5, 0, 0, 0))
+  expect_equal(mcglmgraph:::cpp_spd_line_search(eta, step, b$cube)$halvings, 26)
+  ## a step that needs more than thirty halvings is reported as not SPD
+  far <- mc_spd_line_search(eta, c(rep(-2^31, 3), 0, 0, 0), b)
+  expect_false(far$is_spd)
+  ## the last point tried is the thirty-first, at alpha = 2^-30
+  expect_equal(as.numeric(far$eta_new), c(-1, -1, -1, 0, 0, 0))
+})
+
 test_that("a failed SPD line search is not reported as convergence", {
   local_mocked_bindings(
     cpp_spd_line_search = function(...) list(is_spd = FALSE),

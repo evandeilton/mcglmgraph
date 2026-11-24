@@ -116,7 +116,7 @@ test_that("the order-zero mechanism fools the standard rule and not the others",
     expect_false(r$is_collider)
     expect_true(r$ambiguous)
     expect_equal(r$n_sets, 2L)          # the empty set and the mediator
-    expect_equal(r$prop_centre, 0.5)
+    expect_equal(r$prop_center, 0.5)
   }
 })
 
@@ -204,7 +204,7 @@ test_that("the pipeline carries the rule and the ambiguity through", {
   expect_identical(cons$orient_rule, "conservative")
   expect_s3_class(cons$sepsets, "mcg_sepsets")
   expect_equal(nrow(cons$vstructures), nrow(std$vstructures))
-  expect_true(all(c("ambiguous", "n_sets", "prop_centre") %in%
+  expect_true(all(c("ambiguous", "n_sets", "prop_center") %in%
                     names(cons$vstructures)))
   # the skeleton is untouched by the rule: only the orientation can differ
   expect_identical(cons$pc_skeleton, std$pc_skeleton)
@@ -227,7 +227,7 @@ test_that("mc_find_vstructures exposes the rule with the same columns", {
   f <- make_chain_fit()
   v <- mc_find_vstructures(f, orient_rule = "conservative")
   expect_true(all(c("i", "k", "j", "is_collider", "applied", "ambiguous",
-                    "n_sets", "prop_centre", "pcor", "p_value") %in% names(v)))
+                    "n_sets", "prop_center", "pcor", "p_value") %in% names(v)))
   vs <- mc_find_vstructures(f)
   expect_true(all(is.na(vs$n_sets)))          # no collection under "standard"
   expect_false(any(vs$ambiguous))

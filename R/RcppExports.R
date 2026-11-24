@@ -404,12 +404,12 @@ cpp_check_spd <- function(K, tol = 1e-10) {
 #' @param d Newton direction.
 #' @param bases numeric cube R x R x q_G of base matrices Z_d, with q_G the
 #'   number of graph parameters.
-#' @param max_halvings maximum number of step halvings (default 20).
+#' @param max_halvings maximum number of step halvings (default 30).
 #' @param tol tolerance on the smallest eigenvalue (default 1e-10).
 #' @return list with eta_new (last point tried), step_size, halvings (number
 #'   of halvings performed) and is_spd (whether eta_new passed the test).
 #' @keywords internal
-cpp_spd_line_search <- function(eta, d, bases, max_halvings = 20L, tol = 1e-10) {
+cpp_spd_line_search <- function(eta, d, bases, max_halvings = 30L, tol = 1e-10) {
     .Call(`_mcglmgraph_cpp_spd_line_search`, eta, d, bases, max_halvings, tol)
 }
 
@@ -442,9 +442,12 @@ cpp_partial_cor <- function(K) {
 #' (gamma, delta) without changing the formula.
 #'
 #' K is assumed positive definite and is not checked. For a pair with
-#' K_ii K_jj <= 0 the kernel returns rho = 0, a non-finite gradient and a
-#' variance of zero. A quadratic form g' V g that is negative or not finite is
-#' returned as zero.
+#' K_ii K_jj not strictly positive or not finite, the partial correlation is
+#' undefined: pcor, every entry of its gradient row and its variance are NA,
+#' and the other pairs are unaffected. A quadratic form g' V g below zero by no
+#' more than 1e-10 times sum |g_a| |V_ab| |g_b| is rounding error and is
+#' returned as zero; a more negative one means V is not positive semidefinite
+#' and is returned as NA, as is a non-finite one.
 #'
 #' @param K the R x R precision matrix of the fitted layer.
 #' @param Sdot list of q_G matrices dSigma_b/dtheta_d, one per graph parameter.
@@ -647,7 +650,7 @@ cpp_two_stage_q <- function(K, Dlist) {
 #' @param Ec n x R matrix of centered Pearson residuals; m is the column mean
 #'   of its squares, which must be positive.
 #' @return list with \code{scores} (n x P), the factor \code{Q} (P x R) applied,
-#'   already divided by m_r, and \code{centre}, the vector of the R averages m.
+#'   already divided by m_r, and \code{center}, the vector of the R averages m.
 #' @keywords internal
 cpp_two_stage_scores <- function(Psi, K, Dlist, Ec) {
     .Call(`_mcglmgraph_cpp_two_stage_scores`, Psi, K, Dlist, Ec)

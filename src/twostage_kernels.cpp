@@ -85,7 +85,7 @@ arma::mat cpp_two_stage_q(const arma::mat& K, const Rcpp::List& Dlist) {
 //' @param Ec n x R matrix of centered Pearson residuals; m is the column mean
 //'   of its squares, which must be positive.
 //' @return list with \code{scores} (n x P), the factor \code{Q} (P x R) applied,
-//'   already divided by m_r, and \code{centre}, the vector of the R averages m.
+//'   already divided by m_r, and \code{center}, the vector of the R averages m.
 //' @keywords internal
 // [[Rcpp::export]]
 Rcpp::List cpp_two_stage_scores(const arma::mat& Psi, const arma::mat& K,
@@ -108,5 +108,5 @@ Rcpp::List cpp_two_stage_scores(const arma::mat& Psi, const arma::mat& K,
   Sq.each_row() -= m;
   arma::mat C = Psi - Sq * Q.t();
   return Rcpp::List::create(_["scores"] = C, _["Q"] = Q,
-                            _["centre"] = m.t());
+                            _["center"] = m.t());
 }

@@ -32,12 +32,12 @@ for which it is not exact.}
 \value{
 A data frame with columns \code{i}, \code{k}, \code{j},
   \code{is_collider}, \code{applied}, \code{ambiguous}, \code{n_sets},
-  \code{prop_centre}, \code{pcor} and \code{p_value}. The last two refer to
+  \code{prop_center}, \code{pcor} and \code{p_value}. The last two refer to
   the test of \eqn{i} and \eqn{j} given the set the skeleton recorded;
   \code{applied} is \code{FALSE} for a collider whose orientation was
   withheld because another collider required the opposite direction on one of
   its edges. Under \code{"standard"} the columns \code{n_sets} and
-  \code{prop_centre} are \code{NA}, since no collection is formed.
+  \code{prop_center} are \code{NA}, since no collection is formed.
 }
 \description{
 Runs the PC skeleton search on the estimated between-response covariance and,

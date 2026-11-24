@@ -18,7 +18,7 @@ of its squares, which must be positive.}
 }
 \value{
 list with \code{scores} (n x P), the factor \code{Q} (P x R) applied,
-  already divided by m_r, and \code{centre}, the vector of the R averages m.
+  already divided by m_r, and \code{center}, the vector of the R averages m.
 }
 \description{
 Returns c_i = psi_i - Q (r_i o r_i - m), with m the observed average of the

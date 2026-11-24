@@ -4,7 +4,7 @@
 \alias{mc_spd_line_search}
 \title{Backtracking line search preserving positive-definiteness}
 \usage{
-mc_spd_line_search(eta_old, delta_eta, bases, max_halvings = 20L)
+mc_spd_line_search(eta_old, delta_eta, bases, max_halvings = 30L)
 }
 \arguments{
 \item{eta_old}{current parameter vector \eqn{\eta}, with \eqn{K_b(\eta)}
@@ -16,7 +16,7 @@ positive definite.}
 \code{\link{mc_precision_bases}}.}
 
 \item{max_halvings}{maximum number \eqn{k_{\max}} of step halvings
-(default 20), so that at most \code{max_halvings + 1} steps are tried.}
+(default 30), so that at most \code{max_halvings + 1} steps are tried.}
 }
 \value{
 A list with components

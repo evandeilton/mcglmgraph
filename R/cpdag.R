@@ -523,7 +523,7 @@ print.mcg_sepsets <- function(x, ...) {
 .decide_triples <- function(triples, sep, rule) {
   nt <- nrow(triples)
   out <- data.frame(is_collider = logical(nt), ambiguous = logical(nt),
-                    n_sets = integer(nt), prop_centre = rep(NA_real_, nt))
+                    n_sets = integer(nt), prop_center = rep(NA_real_, nt))
   if (nt == 0L) return(out)
   key <- function(a, b) paste(pmin(a, b), pmax(a, b), sep = ":")
   pid <- match(key(triples[, 1], triples[, 3]),
@@ -535,7 +535,7 @@ print.mcg_sepsets <- function(x, ...) {
     if (!length(rows)) { out$ambiguous[t] <- TRUE; next }
     inc <- sep$members[rows, k] == 1L
     prop <- mean(inc)
-    out$prop_centre[t] <- prop
+    out$prop_center[t] <- prop
     if (identical(rule, "conservative")) {
       if (!any(inc)) out$is_collider[t] <- TRUE
       else if (!all(inc)) out$ambiguous[t] <- TRUE
@@ -575,7 +575,7 @@ print.mcg_sepsets <- function(x, ...) {
   empty_vs <- data.frame(i = integer(0), k = integer(0), j = integer(0),
                          is_collider = logical(0), applied = logical(0),
                          ambiguous = logical(0), n_sets = integer(0),
-                         prop_centre = numeric(0))
+                         prop_center = numeric(0))
   conflicts <- data.frame(from = integer(0), to = integer(0))
   if (nrow(triples) == 0)
     return(list(amat = amat, vstructures = empty_vs, conflicts = conflicts,
@@ -595,7 +595,7 @@ print.mcg_sepsets <- function(x, ...) {
            call. = FALSE)
     dec <- .decide_triples(triples, sep, rule)
     coll <- dec$is_collider; amb <- dec$ambiguous
-    n_sets <- dec$n_sets; prop <- dec$prop_centre
+    n_sets <- dec$n_sets; prop <- dec$prop_center
   }
 
   req <- matrix(FALSE, R, R)                      # req[a, b]: some collider needs a -> b
@@ -624,7 +624,7 @@ print.mcg_sepsets <- function(x, ...) {
   }
   vs <- data.frame(i = triples[, 1], k = triples[, 2], j = triples[, 3],
                    is_collider = coll, applied = applied, ambiguous = amb,
-                   n_sets = n_sets, prop_centre = prop)
+                   n_sets = n_sets, prop_center = prop)
   list(amat = amat, vstructures = vs, conflicts = conflicts,
        ambiguous = triples[amb, , drop = FALSE])
 }
@@ -713,12 +713,12 @@ print.mcg_sepsets <- function(x, ...) {
 #'   \code{"majority"}.
 #' @return A data frame with columns \code{i}, \code{k}, \code{j},
 #'   \code{is_collider}, \code{applied}, \code{ambiguous}, \code{n_sets},
-#'   \code{prop_centre}, \code{pcor} and \code{p_value}. The last two refer to
+#'   \code{prop_center}, \code{pcor} and \code{p_value}. The last two refer to
 #'   the test of \eqn{i} and \eqn{j} given the set the skeleton recorded;
 #'   \code{applied} is \code{FALSE} for a collider whose orientation was
 #'   withheld because another collider required the opposite direction on one of
 #'   its edges. Under \code{"standard"} the columns \code{n_sets} and
-#'   \code{prop_centre} are \code{NA}, since no collection is formed.
+#'   \code{prop_center} are \code{NA}, since no collection is formed.
 #' @references Spirtes, P., Glymour, C. and Scheines, R. (2000).
 #'   \emph{Causation, Prediction, and Search}, 2nd edition. MIT Press.
 #'
@@ -758,7 +758,7 @@ mc_find_vstructures <- function(fit, alpha = 0.05, max_ord = NULL,
     return(data.frame(i = integer(0), k = integer(0), j = integer(0),
                       is_collider = logical(0), applied = logical(0),
                       ambiguous = logical(0), n_sets = integer(0),
-                      prop_centre = numeric(0),
+                      prop_center = numeric(0),
                       pcor = numeric(0), p_value = numeric(0)))
   rep_pcor <- numeric(nrow(vs)); rep_p <- numeric(nrow(vs))
   for (t in seq_len(nrow(vs))) {

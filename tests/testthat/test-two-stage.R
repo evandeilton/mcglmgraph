@@ -140,9 +140,9 @@ test_that("the corrected contributions sum to zero", {
   m <- colMeans(Ec^2)
   want <- Psi - sweep(Ec^2, 2L, m) %*% t(ts$Q)
   expect_equal(bare(ts$scores), bare(want), tolerance = 1e-10)
-  expect_equal(as.numeric(ts$centre), unname(m), tolerance = 1e-12)
+  expect_equal(as.numeric(ts$center), unname(m), tolerance = 1e-12)
   # the center is the first-stage bias correction, 1 - k_r/n, not exactly one
-  expect_equal(as.numeric(ts$centre), rep(1 - 2 / g$n, 3), tolerance = 1e-8)
+  expect_equal(as.numeric(ts$center), rep(1 - 2 / g$n, 3), tolerance = 1e-8)
 })
 
 test_that("the sandwich is recovered when Q is set aside", {
