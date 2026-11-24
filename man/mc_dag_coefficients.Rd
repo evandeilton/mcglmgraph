@@ -22,7 +22,8 @@ mc_dag_coefficients(
 
 \item{variability}{\code{"model"} for \eqn{\mathbf J_n^{-1}},
 \code{"empirical"} for the sandwich, or \code{"two_stage"} for the sandwich
-corrected for the estimation of the residuals.}
+corrected for the estimation of the residuals, by the route
+\code{method = "auto"} takes in \code{\link{mc_vcov_graph}}.}
 
 \item{level}{confidence level of the intervals.}
 

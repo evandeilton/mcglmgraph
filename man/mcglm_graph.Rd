@@ -108,7 +108,8 @@ mcglm method by \code{summary} and \code{coef}; passed to
 \item{variability}{for \code{summary}: the covariance of the graph
 parameters behind the standard errors, \code{"model"} (default),
 \code{"empirical"} for the sandwich or \code{"two_stage"}, as in
-\code{\link{mc_vcov_graph}}.}
+\code{\link{mc_vcov_graph}}. With \code{"two_stage"} the correction takes
+the route of \code{method = "auto"} there.}
 
 \item{cluster, small_sample}{for \code{summary}: passed to
 \code{\link{mc_vcov_graph}}; they apply to \code{variability =

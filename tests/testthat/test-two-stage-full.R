@@ -393,18 +393,26 @@ test_that("clusters of an identity structure sum the unit contributions", {
   expect_equal(bare(Vc), bare(0.5 * (want + t(want))), tolerance = 1e-10)
 })
 
-test_that("auto takes the shortcut where it applies and the full form elsewhere", {
+test_that("auto takes the full form for a variance that depends on the mean and the shortcut for constant ones", {
   skip_on_cran()
   skip_if_not_installed("MASS")
   f <- gamma_fit(300, 19)
   Va <- mc_vcov_graph(f, "two_stage")
-  Vs <- mc_vcov_graph(f, "two_stage", method = "shortcut")
-  expect_identical(attr(Va, "two_stage_method"), "shortcut")
-  expect_equal(bare(Va), bare(Vs), tolerance = 0)
+  Vf <- mc_vcov_graph(f, "two_stage", method = "full")
+  expect_identical(attr(Va, "two_stage_method"), "full")
+  expect_equal(bare(Va), bare(Vf), tolerance = 0)
   av <- mc_two_stage_available(f)
   expect_true(av$shortcut_ok && av$full_ok)
-  expect_identical(av$method, "shortcut")
+  expect_identical(av$method, "full")
   expect_identical(av$ok, av$shortcut_ok)
+
+  # constant variance functions: the shortcut, bit for bit
+  g <- gauss_fit(300, 19)
+  Vg <- mc_vcov_graph(g, "two_stage")
+  Vgs <- mc_vcov_graph(g, "two_stage", method = "shortcut")
+  expect_identical(attr(Vg, "two_stage_method"), "shortcut")
+  expect_equal(bare(Vg), bare(Vgs), tolerance = 0)
+  expect_identical(mc_two_stage_available(g)$method, "shortcut")
 
   # a power estimated in the first stage takes the shortcut out of play
   p <- pt_fit(300, 11)

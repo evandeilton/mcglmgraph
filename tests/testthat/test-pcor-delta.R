@@ -344,7 +344,8 @@ test_that("with gamma residuals the model-based form departs and the empirical o
   th <- pcor_forms_theory(f)
   m <- mc_partial_cor_delta(f, "model")
   e <- mc_partial_cor_delta(f, "empirical")
-  t2 <- mc_partial_cor_delta(f, "two_stage")
+  t2 <- mc_partial_cor_delta(f, "two_stage", method = "shortcut")
+  ta <- mc_partial_cor_delta(f, "two_stage")
   expect_equal(m$se, unname(th$model), tolerance = 1e-8)
   expect_equal(e$se, unname(th$empirical), tolerance = 1e-8)
   # the model-based form is off by far more than sampling error ...
@@ -352,6 +353,10 @@ test_that("with gamma residuals the model-based form departs and the empirical o
   # ... and the two empirical forms still coincide, as the gradients of the
   # partial correlations annihilate the cross sensitivity
   expect_equal(t2$se, e$se, tolerance = 1e-8)
+  # the default route (the full form for a Tweedie variance) agrees with the
+  # empirical forms to first order
+  expect_identical(attr(ta, "two_stage_method"), "full")
+  expect_lt(max(abs(ta$se / e$se - 1)), 5e-3)
 })
 
 
@@ -466,9 +471,19 @@ test_that("structural-zero rows of a sparse GGM carry 0 and NA inference", {
     expect_equal(res[[col]][!abs_row], ref[!abs_row, col],
                  tolerance = 1e-5, info = col)
 
-  ## gradient rows: NA for structural zeros, the numerical gradient otherwise
+  ## gradient rows: exactly 0 for structural zeros (the gradient of the
+  ## constant 0, checked numerically), the numerical gradient otherwise
   G <- attr(res, "gradient")
-  expect_true(all(is.na(G[abs_row, ])))
+  expect_identical(G[abs_row, , drop = FALSE],
+                   matrix(0, sum(abs_row), ncol(G)),
+                   ignore_attr = TRUE)
+  for (e in which(abs_row)) {
+    i <- pairs[e, 1L]; j <- pairs[e, 2L]
+    g_num <- numDeriv::grad(function(p) {
+      K <- mc_build_precision(p, bases); -K[i, j] / sqrt(K[i, i] * K[j, j])
+    }, par)
+    expect_equal(g_num, rep(0, ncol(G)), tolerance = 1e-10)
+  }
   for (e in which(!abs_row)) {
     i <- pairs[e, 1L]; j <- pairs[e, 2L]
     g_num <- numDeriv::grad(function(p) {
@@ -507,8 +522,16 @@ test_that("structural-zero rows of a DAG carry 0 and NA inference", {
   expect_true(res$present[1L])
   expect_false(anyNA(res[1L, c("pcor", "se", "statistic", "p_value")]))
   G <- attr(res, "gradient")
-  expect_true(all(is.na(G[zero, ])))
-  expect_false(anyNA(G[!zero, ]))
+  expect_identical(G[zero, , drop = FALSE], matrix(0, sum(zero), ncol(G)),
+                   ignore_attr = TRUE)
+  expect_false(anyNA(G))
+  for (e in which(zero)) {
+    i <- pairs[e, 1L]; j <- pairs[e, 2L]
+    g_num <- numDeriv::grad(function(p) {
+      K <- precision_of(p); -K[i, j] / sqrt(K[i, i] * K[j, j])
+    }, theta)
+    expect_equal(g_num, rep(0, ncol(G)), tolerance = 1e-10)
+  }
   expect_true(all(res$pcor[zero] == 0))
   for (col in c("se", "statistic", "p_value", "lower", "upper"))
     expect_true(all(is.na(res[[col]][zero])), info = col)
@@ -614,7 +637,12 @@ test_that("mc_partial_cor_delta carries an undefined pair and a bad covariance a
     und <- 1:2
     expect_true(all(res$present[und]))
     expect_true(all(is.na(unlist(res[und, c("pcor", inference)]))), info = ci)
-    expect_true(all(is.na(attr(res, "gradient")[und, ])))
+    Gu <- attr(res, "gradient")
+    expect_true(all(is.na(Gu[und, ])))
+    ## structural zeros hold 0, the undefined present pairs hold NA
+    expect_identical(Gu[!res$present, , drop = FALSE],
+                     matrix(0, sum(!res$present), ncol(Gu)),
+                     ignore_attr = TRUE)
     expect_false(anyNA(res[4L, c("pcor", inference)]))        # pair (2,3)
     ## structural zeros stay 0, whatever the diagonal
     expect_identical(res$pcor[!res$present], c(0, 0, 0))
@@ -628,4 +656,64 @@ test_that("mc_partial_cor_delta carries an undefined pair and a bad covariance a
     expect_identical(res$pcor, ok$pcor)
     expect_true(all(is.na(unlist(res[inference]))), info = ci)
   }
+})
+
+# ─────────────────────────────────────────────────────────────────────────────
+# THE ROUTE OF THE TWO-STAGE VARIABILITY
+# ─────────────────────────────────────────────────────────────────────────────
+test_that("mc_partial_cor_delta takes the route of the two-stage variance", {
+  skip_on_cran()
+  skip_if_not_installed("MASS"); skip_if_not_installed("numDeriv")
+  f <- route_fit("tweedie")
+  g <- f$graph
+  bases <- mc_precision_bases(3L)
+  pairs <- t(utils::combn(3L, 2L))
+  # gradient of the partial correlation, by central differences
+  G <- t(vapply(seq_len(nrow(pairs)), function(e) {
+    i <- pairs[e, 1L]; j <- pairs[e, 2L]
+    numDeriv::grad(function(p) {
+      K <- mc_build_precision(p, bases); -K[i, j] / sqrt(K[i, i] * K[j, j])
+    }, g$par)
+  }, numeric(length(g$par))))
+  res <- list()
+  for (m in c("auto", "shortcut", "full")) {
+    V <- as.matrix(mc_vcov_graph(f, "two_stage", method = m))
+    res[[m]] <- mc_partial_cor_delta(f, "two_stage", method = m)
+    expect_equal(res[[m]]$se, sqrt(diag(G %*% V %*% t(G))), tolerance = 1e-6,
+                 info = m)
+    expect_equal(unname(attr(res[[m]], "gradient")), G, tolerance = 1e-6,
+                 info = m)
+    expect_identical(attr(res[[m]], "two_stage_method"),
+                     if (m == "auto") "full" else m)
+  }
+  expect_identical(res$auto$pcor, res$full$pcor)
+  expect_identical(res$auto$se, res$full$se)
+  expect_identical(res$shortcut$pcor, res$full$pcor)
+  expect_false(isTRUE(all.equal(res$shortcut$se, res$full$se,
+                                tolerance = 1e-12)))
+  # constant variance functions: auto is the shortcut
+  h <- route_fit("gaussian")
+  expect_identical(mc_partial_cor_delta(h, "two_stage")$se,
+                   mc_partial_cor_delta(h, "two_stage", method = "shortcut")$se)
+  expect_identical(attr(mc_partial_cor_delta(h, "two_stage"),
+                        "two_stage_method"), "shortcut")
+  # the other variabilities carry no route
+  expect_null(attr(mc_partial_cor_delta(h), "two_stage_method"))
+})
+
+test_that("mc_partial_cor_delta refuses a route for the other variabilities", {
+  skip_if_not_installed("MASS")
+  f <- route_fit("gaussian")
+  expect_error(mc_partial_cor_delta(f, method = "full"), "has no meaning")
+  expect_error(mc_partial_cor_delta(f, "empirical", method = "shortcut"),
+               "has no meaning")
+  expect_error(mc_partial_cor_delta(f, "two_stage", method = "fast"),
+               "should be one of")
+  expect_identical(
+    mc_partial_cor_delta(f, "empirical", NULL, FALSE, 0.9, "fisher"),
+    mc_partial_cor_delta(f, variability = "empirical", level = 0.9,
+                         interval = "fisher"))
+  expect_identical(names(formals(mc_partial_cor_delta)),
+                   c("fit", "variability", "cluster", "small_sample", "level",
+                     "interval", "method"))
 })

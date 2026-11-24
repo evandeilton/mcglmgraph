@@ -12,17 +12,22 @@ mc_two_stage_available(fit, cluster = NULL)
 \item{cluster}{optional vector with one identifier per observational row,
 as in \code{\link{mc_vcov_graph}}; default \code{NULL}. It changes only
 whether the full form is available for a within-response structure that is
-not the identity, and, on a DAG with an immorality, which route
-\code{method = "auto"} takes.}
+not the identity, and with it the route \code{method = "auto"} takes on a
+DAG with an immorality or on a fit with a variance function other than
+\code{"constant"}.}
 }
 \value{
 A list with \code{shortcut_ok} (logical) and \code{why_shortcut}
   (character vector, empty when the shortcut applies), the verdict and the
   reasons for the shortcut; \code{full_ok} and \code{why_full}, the same for
   the full form; and \code{method}, a string, \code{"shortcut"} or
-  \code{"full"}, the route \code{mc_vcov_graph(type = "two_stage")} takes by
-  default (\code{method = "auto"}), or \code{NA_character_} when neither
-  applies. The components \code{ok} and \code{why} repeat
+  \code{"full"}, the route \code{method = "auto"} takes in
+  \code{mc_vcov_graph(type = "two_stage")} and in the functions that consume
+  it, or \code{NA_character_} when neither applies. The shortcut can apply
+  (\code{shortcut_ok = TRUE}) while \code{method} is \code{"full"}:
+  \code{"auto"} takes the full form, when it is available, for a fit with a
+  variance function other than \code{"constant"} and for a DAG with an
+  immorality. The components \code{ok} and \code{why} repeat
   \code{shortcut_ok} and \code{why_shortcut}.
 }
 \description{
@@ -41,8 +46,12 @@ which \pkg{mcglm} does and the check therefore does not read. The check
 below is that structural one: on a
 DAG with an immorality the shortcut can qualify and still be, for the
 parameters of the collider and of its descendants, only a first-order
-approximation to the reduced form, which is why
-\code{method = "auto"} prefers the full form there. The full form needs
+approximation to the reduced form, which is one of the two cases in which
+\code{method = "auto"} takes the full form when it is available. The other
+is a first stage with a variance function other than \code{"constant"}: the
+shortcut then rests on conditions on the mean and on the residual covariance
+that the fit does not show (see the section "What the check cannot verify").
+The full form needs
 only that the first stage be a sum over units, which is what the rows are
 when the within-response structure is the identity, and what the clusters
 must be otherwise.
@@ -116,6 +125,11 @@ within-response structure qualifies, while its neighboring sites remain
 dependent, since coordinates in the mean do not whiten the residuals. There
 the rows are not independent units, and neither the corrected form nor the
 sandwich it corrects has the variance it claims.
+
+Since the first two cannot be verified, and the constant variance function
+is the case that does not need the second, \code{method = "auto"} takes the
+full form, when it is available, for a fit in which some response has
+another variance function.
 }
 
 \examples{

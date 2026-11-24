@@ -489,7 +489,8 @@ mc_dag_sensitivity <- function(Sigma_b, delta, n, R, edges = NULL) {
 #' @param fit an object of class \code{"mcglm_graph"} fitted with the DAG layer.
 #' @param variability \code{"model"} for \eqn{\mathbf J_n^{-1}},
 #'   \code{"empirical"} for the sandwich, or \code{"two_stage"} for the sandwich
-#'   corrected for the estimation of the residuals.
+#'   corrected for the estimation of the residuals, by the route
+#'   \code{method = "auto"} takes in \code{\link{mc_vcov_graph}}.
 #' @param level confidence level of the intervals.
 #' @param interval \code{"delta"} (default) or \code{"fixed_factor"}, the
 #'   interval for \eqn{\gamma^*} as described above.

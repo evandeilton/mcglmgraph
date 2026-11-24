@@ -223,8 +223,12 @@ mc_plot_network <- function(fit, threshold = 0.05, edge_labels = FALSE) {
 #' In the GGM layer, a pair outside the specified precision support is zero by
 #' construction and has no sampling distribution. Its row reports
 #' \code{pcor = 0} and \code{NA} for \code{se}, \code{statistic},
-#' \code{p_value}, \code{lower} and \code{upper}, and its row of the
-#' \code{"gradient"} attribute is \code{NA}; this is decided from
+#' \code{p_value}, \code{lower} and \code{upper}. Its row of the
+#' \code{"gradient"} attribute is exactly 0 in every column: the partial
+#' correlation of such a pair is the constant 0, and the gradient of a constant
+#' is 0. That row of zeros is not a standard error of zero: a quadratic form in
+#' it gives 0, while the pair has no sampling distribution at all, which is
+#' what the \code{NA} in \code{se} says. All of this is decided from
 #' \code{present} and not from the size of the standard error. In the DAG
 #' layer, structural zeros of the precision are instead determined by the moral
 #' graph. In particular, two
@@ -249,10 +253,12 @@ mc_plot_network <- function(fit, threshold = 0.05, edge_labels = FALSE) {
 #'   section "What the correction reaches" of \code{\link{mc_vcov_graph}}.
 #'   Whether that common variance is right depends on the same conditions: a
 #'   residual correlation that moves with the covariates puts both off, and
-#'   only the full form, \code{\link{mc_vcov_graph}(type = "two_stage", method
-#'   = "full")}, accounts for it. The model-based form agrees with the empirical
-#'   ones only when, in addition, \eqn{\mathbf V=\mathbf J}, which fails
-#'   outside the Gaussian fourth-moment regime.
+#'   only the full form accounts for it, which \code{method = "full"} requests
+#'   and \code{method = "auto"} takes, when it is available, for a fit with a
+#'   variance function other than \code{"constant"}. The model-based form
+#'   agrees with the empirical ones only when, in addition,
+#'   \eqn{\mathbf V=\mathbf J}, which fails outside the Gaussian fourth-moment
+#'   regime.
 #' @param cluster optional vector with one identifier per observational row,
 #'   honored by the two empirical forms (\code{"empirical"} and
 #'   \code{"two_stage"}). Contributions are summed within
@@ -269,6 +275,10 @@ mc_plot_network <- function(fit, threshold = 0.05, edge_labels = FALSE) {
 #'   \eqn{\mathrm{se}/(1-\rho^2)}, and mapped back by \eqn{\tanh}, so that
 #'   the bounds stay inside \eqn{(-1, 1)}. The standard error, the statistic
 #'   and the p-value are the same under both.
+#' @param method for \code{variability = "two_stage"}, the route of the
+#'   correction, \code{"auto"} (default), \code{"shortcut"} or \code{"full"}, as
+#'   in \code{\link{mc_vcov_graph}}. It has no meaning for the other two forms
+#'   and is refused with them when it is not \code{"auto"}.
 #' @return A data frame with one row per pair of responses
 #'   (\eqn{q = R(R-1)/2} rows) and columns \code{response1},
 #'   \code{response2}, \code{present} (logical support indicator),
@@ -285,10 +295,12 @@ mc_plot_network <- function(fit, threshold = 0.05, edge_labels = FALSE) {
 #'   follow the pairs \eqn{(i, j)}, \eqn{i < j}, in lexicographic order. The
 #'   attribute \code{"gradient"} holds the matrix of gradients
 #'   \eqn{\mathbf g_{ij}}, with one row per pair and one column per graph
-#'   parameter, the row being \code{NA} for a pair with
-#'   \code{present = FALSE} or an undefined partial correlation, and the
-#'   attributes \code{"variability"}, \code{"level"} and
-#'   \code{"interval"} record the choices used.
+#'   parameter. The row of a pair with \code{present = FALSE} is exactly 0, the
+#'   gradient of a constant, and the row of a pair with an undefined partial
+#'   correlation is \code{NA}. The attributes \code{"variability"},
+#'   \code{"level"} and \code{"interval"} record the choices used; with
+#'   \code{variability = "two_stage"} the attribute \code{"two_stage_method"}
+#'   records the route taken.
 #' @examples
 #' set.seed(1); n <- 300
 #' K <- diag(3) * 2; K[1, 2] <- K[2, 1] <- -0.7
@@ -309,10 +321,16 @@ mc_partial_cor_delta <- function(fit,
                                                  "two_stage"),
                                  cluster = NULL, small_sample = FALSE,
                                  level = 0.95,
-                                 interval = c("wald", "fisher")) {
+                                 interval = c("wald", "fisher"),
+                                 method = c("auto", "shortcut", "full")) {
   stopifnot(inherits(fit, "mcglm_graph"))
   variability <- match.arg(variability)
   interval <- match.arg(interval)
+  method <- match.arg(method)
+  # The route applies to the two-stage variability only.
+  if (variability != "two_stage" && method != "auto")
+    stop("method chooses the route of variability = \"two_stage\" and has ",
+         "no meaning for variability = \"", variability, "\".", call. = FALSE)
   if (length(level) != 1L || !is.finite(level) || level <= 0 || level >= 1)
     stop("level must be a single number strictly between 0 and 1.")
   .assert_graph_inference(fit, "Partial-correlation delta inference")
@@ -325,7 +343,8 @@ mc_partial_cor_delta <- function(fit,
   V <- mc_vcov_graph(fit, type = switch(variability, model = "model",
                                         empirical = "sandwich",
                                         two_stage = "two_stage"),
-                     cluster = cluster, small_sample = small_sample)
+                     cluster = cluster, small_sample = small_sample,
+                     method = method)
   pairs <- t(utils::combn(g$R, 2L))
   storage.mode(pairs) <- "integer"
 
@@ -348,12 +367,13 @@ mc_partial_cor_delta <- function(fit,
     lower <- rho - half; upper <- rho + half
   }
 
-  # Structural zeros: zero by construction, no sampling distribution
+  # Structural zeros: zero by construction, no sampling distribution. The
+  # partial correlation is the constant 0 there, so its gradient is exactly 0.
   zero <- !present
   rho[zero] <- 0
   se[zero] <- z[zero] <- lower[zero] <- upper[zero] <- NA_real_
   grad <- out$gradient
-  grad[zero, ] <- NA_real_
+  grad[zero, ] <- 0
 
   res <- data.frame(
     response1 = g$response_names[pairs[, 1L]],
@@ -371,6 +391,8 @@ mc_partial_cor_delta <- function(fit,
   attr(res, "variability") <- variability
   attr(res, "level") <- level
   attr(res, "interval") <- interval
+  # Route taken by the two-stage variance; absent for the other two forms.
+  attr(res, "two_stage_method") <- attr(V, "two_stage_method", exact = TRUE)
   res
 }
 

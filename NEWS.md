@@ -1,3 +1,17 @@
+# mcglmgraph 0.8.4
+
+* `mc_test_independence()` and `mc_partial_cor_delta()` take `method`, the
+  route of the two-stage correction, as `mc_vcov_graph()` does.
+* `method = "auto"` of the two-stage correction takes the full form, when it
+  is available, for a fit in which a response has a variance function other
+  than `"constant"`. Every function that uses the two-stage variance follows
+  it; `method = "shortcut"` gives the shortcut for such a fit.
+* `mc_partial_cor_delta()`: the rows of the `"gradient"` attribute for pairs
+  outside the support hold 0, the gradient of a constant, instead of `NA`.
+* `mc_wald_graph()` refuses a contrast whose variance is at most 1e-6 of its
+  model-based variance, which covers a parameter the first stage fixes under
+  either route of the two-stage variance.
+
 # mcglmgraph 0.8.3
 
 * `mc_spd_line_search()`: the default `max_halvings` is 30, the value

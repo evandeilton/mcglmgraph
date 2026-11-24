@@ -10,7 +10,8 @@ mc_partial_cor_delta(
   cluster = NULL,
   small_sample = FALSE,
   level = 0.95,
-  interval = c("wald", "fisher")
+  interval = c("wald", "fisher"),
+  method = c("auto", "shortcut", "full")
 )
 }
 \arguments{
@@ -28,10 +29,12 @@ the full form they agree to first order under the conditions of the
 section "What the correction reaches" of \code{\link{mc_vcov_graph}}.
 Whether that common variance is right depends on the same conditions: a
 residual correlation that moves with the covariates puts both off, and
-only the full form, \code{\link{mc_vcov_graph}(type = "two_stage", method
-= "full")}, accounts for it. The model-based form agrees with the empirical
-ones only when, in addition, \eqn{\mathbf V=\mathbf J}, which fails
-outside the Gaussian fourth-moment regime.}
+only the full form accounts for it, which \code{method = "full"} requests
+and \code{method = "auto"} takes, when it is available, for a fit with a
+variance function other than \code{"constant"}. The model-based form
+agrees with the empirical ones only when, in addition,
+\eqn{\mathbf V=\mathbf J}, which fails outside the Gaussian fourth-moment
+regime.}
 
 \item{cluster}{optional vector with one identifier per observational row,
 honored by the two empirical forms (\code{"empirical"} and
@@ -52,6 +55,11 @@ partial correlation, or \code{"fisher"}, symmetric on the scale of
 \eqn{\mathrm{se}/(1-\rho^2)}, and mapped back by \eqn{\tanh}, so that
 the bounds stay inside \eqn{(-1, 1)}. The standard error, the statistic
 and the p-value are the same under both.}
+
+\item{method}{for \code{variability = "two_stage"}, the route of the
+correction, \code{"auto"} (default), \code{"shortcut"} or \code{"full"}, as
+in \code{\link{mc_vcov_graph}}. It has no meaning for the other two forms
+and is refused with them when it is not \code{"auto"}.}
 }
 \value{
 A data frame with one row per pair of responses
@@ -70,10 +78,12 @@ A data frame with one row per pair of responses
   follow the pairs \eqn{(i, j)}, \eqn{i < j}, in lexicographic order. The
   attribute \code{"gradient"} holds the matrix of gradients
   \eqn{\mathbf g_{ij}}, with one row per pair and one column per graph
-  parameter, the row being \code{NA} for a pair with
-  \code{present = FALSE} or an undefined partial correlation, and the
-  attributes \code{"variability"}, \code{"level"} and
-  \code{"interval"} record the choices used.
+  parameter. The row of a pair with \code{present = FALSE} is exactly 0, the
+  gradient of a constant, and the row of a pair with an undefined partial
+  correlation is \code{NA}. The attributes \code{"variability"},
+  \code{"level"} and \code{"interval"} record the choices used; with
+  \code{variability = "two_stage"} the attribute \code{"two_stage_method"}
+  records the route taken.
 }
 \description{
 Attaches standard errors and confidence intervals to the partial
@@ -113,8 +123,12 @@ explicitly mark graph-layer inference as uncertified.
 In the GGM layer, a pair outside the specified precision support is zero by
 construction and has no sampling distribution. Its row reports
 \code{pcor = 0} and \code{NA} for \code{se}, \code{statistic},
-\code{p_value}, \code{lower} and \code{upper}, and its row of the
-\code{"gradient"} attribute is \code{NA}; this is decided from
+\code{p_value}, \code{lower} and \code{upper}. Its row of the
+\code{"gradient"} attribute is exactly 0 in every column: the partial
+correlation of such a pair is the constant 0, and the gradient of a constant
+is 0. That row of zeros is not a standard error of zero: a quadratic form in
+it gives 0, while the pair has no sampling distribution at all, which is
+what the \code{NA} in \code{se} says. All of this is decided from
 \code{present} and not from the size of the standard error. In the DAG
 layer, structural zeros of the precision are instead determined by the moral
 graph. In particular, two

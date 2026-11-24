@@ -53,7 +53,8 @@ print.mcglm_graph <- function(x, ...) {
 #' @param variability for \code{summary}: the covariance of the graph
 #'   parameters behind the standard errors, \code{"model"} (default),
 #'   \code{"empirical"} for the sandwich or \code{"two_stage"}, as in
-#'   \code{\link{mc_vcov_graph}}.
+#'   \code{\link{mc_vcov_graph}}. With \code{"two_stage"} the correction takes
+#'   the route of \code{method = "auto"} there.
 #' @param cluster,small_sample for \code{summary}: passed to
 #'   \code{\link{mc_vcov_graph}}; they apply to \code{variability =
 #'   "empirical"} and \code{"two_stage"} only and are refused with
@@ -476,20 +477,33 @@ plot.mcglm_graph <- function(x, type = c("network", "residuals"), ...) {
 #' matrix linear predictor must vanish between distinct clusters, which is
 #' checked.
 #'
-#' \code{method = "auto"} takes the shortcut when it applies and the full form
-#' otherwise, with one exception in the DAG layer. The shortcut evaluates the
-#' reduced form at the fitted covariance, which is exact for the parameters of
-#' every node of a DAG without immoralities but, for the parameters of a
-#' collider with non-adjacent parents and of its descendants, only a
-#' first-order approximation under correct specification; so when the fitted
-#' DAG has an immorality \code{"auto"} takes the full form if
-#' it is available, and otherwise keeps the shortcut with a warning. An explicit
-#' \code{method = "shortcut"} is honored on such a DAG without a warning. On
-#' the fits the shortcut covers the two agree to first order when the
-#' conditions of the section "When the shortcut is right" hold.
-#' Use \code{\link{mc_two_stage_available}} to see which route applies; a fit
-#' neither covers raises an error rather than returning the uncorrected matrix
-#' under the corrected name.
+#' \code{method = "auto"} reads the route from what the fit shows. It takes
+#' the full form when the full form is available and at least one response has
+#' a variance function other than \code{"constant"}. With a variance that
+#' depends on the mean the shortcut needs condition (c) of the section "What
+#' the correction reaches", at least in its weaker form, and that is a
+#' statement about the data that cannot be read off the fit. It also takes the
+#' full form, when it is available, on a fitted DAG with an immorality: the
+#' shortcut evaluates the reduced form at the fitted covariance, which is exact
+#' for the parameters of every node of a DAG without immoralities but, for the
+#' parameters of a collider with non-adjacent parents and of its descendants,
+#' only a first-order approximation under correct specification. In every other
+#' case \code{"auto"} takes the shortcut when it applies and the full form when
+#' it does not. The shortcut, when it applies, is therefore the route in two
+#' cases: every response has the constant variance function and the layer is a
+#' GGM or a DAG without immoralities, or the full form is not available. On a
+#' DAG with an immorality the second case raises a warning. The variance
+#' function is read by its name in the first-stage fit, one per response,
+#' whatever its power: a Tweedie variance with power fixed at zero counts as
+#' depending on the mean, and so does a fit whose names cannot be read.
+#' \code{method = "shortcut"} and
+#' \code{method = "full"} force a route, and an explicit \code{"shortcut"} is
+#' honored without a warning. On the fits both routes cover they agree to first
+#' order when the conditions of the section "When the shortcut is right" hold.
+#' The attribute \code{"two_stage_method"} of the result records the route
+#' taken, and \code{\link{mc_two_stage_available}} reports it beforehand; a fit
+#' neither route covers raises an error rather than returning the uncorrected
+#' matrix under the corrected name.
 #' @section What the correction reaches:
 #' How much of the propagation reaches a given quantity is settled, for the
 #' undirected layer, by a diagonal-rescaling argument, under three conditions on
@@ -557,10 +571,13 @@ plot.mcglm_graph <- function(x, type = c("network", "residuals"), ...) {
 #'   variability by \eqn{G/(G-1)}, with \eqn{G} the number of clusters. It has
 #'   no effect without \code{cluster} and is refused with
 #'   \code{type = "model"}.
-#' @param method for \code{type = "two_stage"}, \code{"auto"} (the shortcut
-#'   when it applies, the full form otherwise; on a DAG with an immorality, the
-#'   full form whenever it is available), \code{"shortcut"} or \code{"full"}.
-#'   It has no meaning for the other two types.
+#' @param method for \code{type = "two_stage"}, the route of the correction:
+#'   \code{"shortcut"}, \code{"full"}, or \code{"auto"} (default).
+#'   \code{"auto"} takes the full form when it is available and either a
+#'   response has a variance function other than \code{"constant"} or the fitted
+#'   DAG has an immorality; in every other case it takes the shortcut when it
+#'   applies and the full form when it does not. The full form rebuilds the
+#'   first stage and is slower. It has no meaning for the other two types.
 #' @param sensitivity for the full form, \code{"observed"} (default) or
 #'   \code{"expected"}, the sensitivity of the first stage described in the
 #'   section "The full form".
@@ -696,8 +713,8 @@ mc_vcov_graph <- function(fit, type = c("model", "sandwich", "two_stage"),
 #' requires the working identity \eqn{\mathbf V=\mathbf J} (a correctly
 #' specified second moment and Gaussian fourth moments); \code{type =
 #' "sandwich"} does not use it, and \code{type = "two_stage"} also accounts for
-#' the estimation of the first stage. The edges tested are those of the support
-#' of the fit, and the
+#' the estimation of the first stage, by the route \code{method} selects. The
+#' edges tested are those of the support of the fit, and the
 #' graph is treated as fixed: for a support chosen by a search over graphs, the
 #' result is descriptive. It is a standalone function so that the inherited
 #' \code{anova.mcglm} method remains available on the object. The function
@@ -725,6 +742,10 @@ mc_vcov_graph <- function(fit, type = c("model", "sandwich", "two_stage"),
 #'   precedence over \code{robust}, which must then not contradict it. The
 #'   default \code{NULL} uses \code{"sandwich"} if \code{robust} is
 #'   \code{TRUE} and \code{"model"} otherwise.
+#' @param method for \code{type = "two_stage"}, the route of the correction,
+#'   \code{"auto"} (default), \code{"shortcut"} or \code{"full"}, as in
+#'   \code{\link{mc_vcov_graph}}. It has no meaning for the other two types and
+#'   is refused with them when it is not \code{"auto"}.
 #' @return An object of class \code{"htest"}: the Wald \code{statistic}, the
 #'   degrees of freedom in \code{parameter} (the number of edges), the
 #'   \code{p.value}, and the \code{method} and \code{data.name} labels.
@@ -749,8 +770,10 @@ mc_vcov_graph <- function(fit, type = c("model", "sandwich", "two_stage"),
 #' }
 #' @export
 mc_test_independence <- function(fit, robust = FALSE, cluster = NULL,
-                                 small_sample = FALSE, type = NULL) {
+                                 small_sample = FALSE, type = NULL,
+                                 method = c("auto", "shortcut", "full")) {
   stopifnot(inherits(fit, "mcglm_graph"))
+  method <- match.arg(method)
   .assert_graph_inference(fit, "Wald testing")
   g <- fit$graph
   ep <- g$edge_pos
@@ -762,6 +785,10 @@ mc_test_independence <- function(fit, robust = FALSE, cluster = NULL,
     if (!missing(robust) && !identical(isTRUE(robust), type != "model"))
       stop("robust and type disagree; give one of them.", call. = FALSE)
   }
+  # The route applies to the two-stage covariance only.
+  if (type != "two_stage" && method != "auto")
+    stop("method chooses the route of type = \"two_stage\" and has no ",
+         "meaning for type = \"", type, "\".", call. = FALSE)
   if (type == "model" && !is.null(cluster))
     stop("cluster is available only for robust = TRUE or an empirical type.")
   if (type == "model" && isTRUE(small_sample))
@@ -774,7 +801,7 @@ mc_test_independence <- function(fit, robust = FALSE, cluster = NULL,
   L <- matrix(0, q, length(g$par))
   L[cbind(seq_len(q), ep)] <- 1
   w <- mc_wald_graph(fit, L, 0, type = type, cluster = cluster,
-                     small_sample = small_sample)
+                     small_sample = small_sample, method = method)
   structure(list(statistic = w$statistic,
                  parameter = c(df = q),
                  p.value = w$p.value,

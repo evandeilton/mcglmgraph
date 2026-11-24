@@ -33,10 +33,13 @@ variability by \eqn{G/(G-1)}, with \eqn{G} the number of clusters. It has
 no effect without \code{cluster} and is refused with
 \code{type = "model"}.}
 
-\item{method}{for \code{type = "two_stage"}, \code{"auto"} (the shortcut
-when it applies, the full form otherwise; on a DAG with an immorality, the
-full form whenever it is available), \code{"shortcut"} or \code{"full"}.
-It has no meaning for the other two types.}
+\item{method}{for \code{type = "two_stage"}, the route of the correction:
+\code{"shortcut"}, \code{"full"}, or \code{"auto"} (default).
+\code{"auto"} takes the full form when it is available and either a
+response has a variance function other than \code{"constant"} or the fitted
+DAG has an immorality; in every other case it takes the shortcut when it
+applies and the full form when it does not. The full form rebuilds the
+first stage and is slower. It has no meaning for the other two types.}
 
 \item{sensitivity}{for the full form, \code{"observed"} (default) or
 \code{"expected"}, the sensitivity of the first stage described in the
@@ -370,20 +373,33 @@ structure \code{cluster} is required and has to nest it: every matrix of the
 matrix linear predictor must vanish between distinct clusters, which is
 checked.
 
-\code{method = "auto"} takes the shortcut when it applies and the full form
-otherwise, with one exception in the DAG layer. The shortcut evaluates the
-reduced form at the fitted covariance, which is exact for the parameters of
-every node of a DAG without immoralities but, for the parameters of a
-collider with non-adjacent parents and of its descendants, only a
-first-order approximation under correct specification; so when the fitted
-DAG has an immorality \code{"auto"} takes the full form if
-it is available, and otherwise keeps the shortcut with a warning. An explicit
-\code{method = "shortcut"} is honored on such a DAG without a warning. On
-the fits the shortcut covers the two agree to first order when the
-conditions of the section "When the shortcut is right" hold.
-Use \code{\link{mc_two_stage_available}} to see which route applies; a fit
-neither covers raises an error rather than returning the uncorrected matrix
-under the corrected name.
+\code{method = "auto"} reads the route from what the fit shows. It takes
+the full form when the full form is available and at least one response has
+a variance function other than \code{"constant"}. With a variance that
+depends on the mean the shortcut needs condition (c) of the section "What
+the correction reaches", at least in its weaker form, and that is a
+statement about the data that cannot be read off the fit. It also takes the
+full form, when it is available, on a fitted DAG with an immorality: the
+shortcut evaluates the reduced form at the fitted covariance, which is exact
+for the parameters of every node of a DAG without immoralities but, for the
+parameters of a collider with non-adjacent parents and of its descendants,
+only a first-order approximation under correct specification. In every other
+case \code{"auto"} takes the shortcut when it applies and the full form when
+it does not. The shortcut, when it applies, is therefore the route in two
+cases: every response has the constant variance function and the layer is a
+GGM or a DAG without immoralities, or the full form is not available. On a
+DAG with an immorality the second case raises a warning. The variance
+function is read by its name in the first-stage fit, one per response,
+whatever its power: a Tweedie variance with power fixed at zero counts as
+depending on the mean, and so does a fit whose names cannot be read.
+\code{method = "shortcut"} and
+\code{method = "full"} force a route, and an explicit \code{"shortcut"} is
+honored without a warning. On the fits both routes cover they agree to first
+order when the conditions of the section "When the shortcut is right" hold.
+The attribute \code{"two_stage_method"} of the result records the route
+taken, and \code{\link{mc_two_stage_available}} reports it beforehand; a fit
+neither route covers raises an error rather than returning the uncorrected
+matrix under the corrected name.
 }
 
 \section{What the correction reaches}{

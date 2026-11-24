@@ -343,8 +343,8 @@ fit &lt;- <span class="f">mcglmgraph</span>(forms,
     <h2>Read the graph layer</h2>
     <div class="entry"><span class="sig"><span class="fn">mc_partial_cor</span>(fit)</span>
       <span class="d"><span class="m">&rho;<sub>ij&#183;rest</sub> = &#8722;K<sub>ij</sub> / (K<sub>ii</sub>K<sub>jj</sub>)<sup>1/2</sup></span>, the reading of either layer.</span></div>
-    <div class="entry"><span class="sig"><span class="fn">mc_partial_cor_delta</span>(fit, <span class="a">variability</span> = <span class="s">"model"</span>)</span>
-      <span class="d">Delta-method SE, Wald <span class="m">z</span>, p-value and CI per pair; also <span class="s">"empirical"</span>, <span class="s">"two_stage"</span>. <span class="o">present</span> = structurally allowed (GGM support, moral graph of a DAG).</span></div>
+    <div class="entry"><span class="sig"><span class="fn">mc_partial_cor_delta</span>(fit, <span class="a">variability</span> = <span class="s">"model"</span>, <span class="a">method</span>)</span>
+      <span class="d">Delta-method SE, Wald <span class="m">z</span>, p-value and CI per pair; also <span class="s">"empirical"</span>, <span class="s">"two_stage"</span>. <span class="o">present</span> = structurally allowed (GGM support, moral graph of a DAG). Absent pairs: pcor 0, NA inference, gradient row 0.</span></div>
     <div class="entry"><span class="sig"><span class="fn">mc_dag_coefficients</span>(fit_dag, <span class="a">interval</span> = <span class="s">"delta"</span>)</span>
       <span class="d">Scale-free quantities of the DAG, the ones to report:
       <span class="m">&gamma;*<sub>jk</sub> = &gamma;<sub>jk</sub>(&Sigma;<sub>kk</sub>/&Sigma;<sub>jj</sub>)<sup>1/2</sup></span> and <span class="m">R<sup>2</sup><sub>j&#183;P<sub>j</sub></sub> = 1 &#8722; &delta;<sub>j</sub>/&Sigma;<sub>jj</sub></span>, with SE and intervals.</span></div>
@@ -372,7 +372,7 @@ fit &lt;- <span class="f">mcglmgraph</span>(forms,
       <tr><td><span class="s">"sandwich"</span></td><td><span class="m">H<sup>&#8722;1</sup>(nV&#770;)H<sup>&#8722;1</sup></span></td><td>centered scores per unit or <span class="a">cluster</span></td></tr>
       <tr><td><span class="s">"two_stage"</span></td><td>sandwich + stage&nbsp;1</td><td>adds the first-stage uncertainty</td></tr>
     </table>
-    <p>The first two are <b>conditional on the residuals</b>. For <span class="s">"two_stage"</span>, <span class="a">method</span> = <span class="s">"shortcut"</span> needs one multiplicative dispersion per response, identity <span class="a">matrix_pred</span>, constant weights; <span class="s">"full"</span>: any family, <span class="a">sensitivity</span> = <span class="s">"observed"</span> or <span class="s">"expected"</span>. <span class="s">"auto"</span>: shortcut if it applies and no DAG immorality.</p>
+    <p>The first two are <b>conditional on the residuals</b>. For <span class="s">"two_stage"</span>, <span class="a">method</span> = <span class="s">"shortcut"</span> needs one multiplicative dispersion per response, identity <span class="a">matrix_pred</span>, constant weights; <span class="s">"full"</span>: any family, <span class="a">sensitivity</span> = <span class="s">"observed"</span> or <span class="s">"expected"</span>. <span class="s">"auto"</span>: full if available and a variance is not <span class="s">"constant"</span> or the DAG has an immorality; else shortcut if it applies.</p>
     <div class="entry"><span class="sig"><span class="fn">mc_two_stage_available</span>(fit, <span class="a">cluster</span>)</span>
       <span class="d">Which route applies, and why not.</span></div>
     <pre class="code">V &lt;- <span class="f">mc_vcov_graph</span>(fit, <span class="s">"two_stage"</span>)
@@ -385,7 +385,7 @@ fit &lt;- <span class="f">mcglmgraph</span>(forms,
     <div class="entry"><span class="sig"><span class="fn">mc_wald_graph</span>(fit, <span class="a">L</span>, <span class="a">rhs</span> = 0, <span class="a">type</span> = <span class="s">"sandwich"</span>)</span>
       <span class="d"><span class="m">H<sub>0</sub>: L&theta; = c</span>; <span class="a">L</span> as a contrast matrix, a vector, or parameter names.</span></div>
     <pre class="code"><span class="f">mc_wald_graph</span>(fit, <span class="f">c</span>(<span class="s">"eta_13"</span>, <span class="s">"eta_14"</span>))</pre>
-    <div class="entry"><span class="sig"><span class="fn">mc_test_independence</span>(fit, <span class="a">robust</span> = FALSE, <span class="a">type</span>)</span>
+    <div class="entry"><span class="sig"><span class="fn">mc_test_independence</span>(fit, <span class="a">robust</span> = FALSE, <span class="a">type</span>, <span class="a">method</span>)</span>
       <span class="d">All edge parameters zero: no residual conditional association. Model-based by default; <span class="a">type</span> = <span class="s">"sandwich"</span> or <span class="s">"two_stage"</span>.</span></div>
     <div class="entry"><span class="sig"><span class="fn">mc_test_adequacy</span>(sel$fit)</span>
       <span class="d">Omitted edges jointly zero, against the saturated graph refitted on the same residuals.</span></div>
@@ -399,7 +399,7 @@ fit &lt;- <span class="f">mcglmgraph</span>(forms,
 
 <footer class="bottom">
   <span><b>mcglmgraph</b> &middot; J. E. Lopes &amp; W. H. Bonat &middot; GPL-3 &middot; built on <b>mcglm</b> (Bonat &amp; J&oslash;rgensen, 2016; Bonat, 2018)</span>
-  <span>Learn more: <span class="fn">vignette("mcglmgraph-intro")</span> &middot; mcglmgraph 0.8.3 &middot; Updated: 2026-11</span>
+  <span>Learn more: <span class="fn">vignette("mcglmgraph-intro")</span> &middot; mcglmgraph 0.8.4 &middot; Updated: 2026-11</span>
 </footer>
 </div></div>
 
@@ -598,7 +598,7 @@ bt$se; bt$ci
 
 <footer class="bottom">
   <span><b>mcglmgraph</b> &middot; J. E. Lopes &amp; W. H. Bonat &middot; GPL-3 &middot; built on <b>mcglm</b> (Bonat &amp; J&oslash;rgensen, 2016; Bonat, 2018)</span>
-  <span>Learn more: <span class="fn">vignette("mcglmgraph-intro")</span> &middot; mcglmgraph 0.8.3 &middot; Updated: 2026-11</span>
+  <span>Learn more: <span class="fn">vignette("mcglmgraph-intro")</span> &middot; mcglmgraph 0.8.4 &middot; Updated: 2026-11</span>
 </footer>
 </div></div>
 

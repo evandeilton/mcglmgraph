@@ -9,7 +9,8 @@ mc_test_independence(
   robust = FALSE,
   cluster = NULL,
   small_sample = FALSE,
-  type = NULL
+  type = NULL,
+  method = c("auto", "shortcut", "full")
 )
 }
 \arguments{
@@ -38,6 +39,11 @@ Requires an empirical covariance and has no effect without \code{cluster}.}
 precedence over \code{robust}, which must then not contradict it. The
 default \code{NULL} uses \code{"sandwich"} if \code{robust} is
 \code{TRUE} and \code{"model"} otherwise.}
+
+\item{method}{for \code{type = "two_stage"}, the route of the correction,
+\code{"auto"} (default), \code{"shortcut"} or \code{"full"}, as in
+\code{\link{mc_vcov_graph}}. It has no meaning for the other two types and
+is refused with them when it is not \code{"auto"}.}
 }
 \value{
 An object of class \code{"htest"}: the Wald \code{statistic}, the
@@ -68,8 +74,8 @@ default covariance is the model-based one, for which that reference also
 requires the working identity \eqn{\mathbf V=\mathbf J} (a correctly
 specified second moment and Gaussian fourth moments); \code{type =
 "sandwich"} does not use it, and \code{type = "two_stage"} also accounts for
-the estimation of the first stage. The edges tested are those of the support
-of the fit, and the
+the estimation of the first stage, by the route \code{method} selects. The
+edges tested are those of the support of the fit, and the
 graph is treated as fixed: for a support chosen by a search over graphs, the
 result is descriptive. It is a standalone function so that the inherited
 \code{anova.mcglm} method remains available on the object. The function

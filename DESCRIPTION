@@ -1,7 +1,7 @@
 Package: mcglmgraph
 Type: Package
 Title: Graphical Multivariate Covariance Generalized Linear Models
-Version: 0.8.3
+Version: 0.8.4
 Authors@R: c(
     person(c("Jose", "Evandeilton"), "Lopes", role = c("aut", "cre"),
            email = "evandeilton@gmail.com"),

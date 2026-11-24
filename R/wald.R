@@ -99,7 +99,11 @@
 #' its range, judged against the model-based variance of the same contrast.
 #' That happens with \code{type = "two_stage"} for a parameter the first stage
 #' fixes exactly, such as the innovation variance of a root node of a DAG with
-#' Gaussian intercept-only margins, whose corrected variance is zero.
+#' Gaussian intercept-only margins, whose corrected variance is zero. A contrast
+#' counts as having no variability when its variance is at most \eqn{10^{-6}}
+#' of its model-based variance, on the scale of the model-based standard
+#' deviations; the margin covers the numerical residue that the full form
+#' leaves where the exact variance is zero.
 #'
 #' @section What the reference distribution requires:
 #' The chi-squared reference holds for a hypothesis fixed before looking at the
@@ -182,14 +186,18 @@ mc_wald_graph <- function(fit, L, rhs = 0,
   # A contrast whose variance vanishes next to its model-based variance is a
   # quantity the covariance takes as fixed, and no statistic is defined for it.
   # Each row is put on the scale of its model-based standard deviation, so the
-  # verdict does not change when a row of L is rescaled.
+  # verdict does not change when a row of L is rescaled. The observed
+  # first-stage sensitivity is a finite difference, so a variance that is zero
+  # in exact arithmetic comes back as a residue of order 1e-9 of the
+  # model-based one: 1e-6 sits far above that residue and far below the ratio
+  # of any contrast that can be estimated.
   ev <- eigen(M, symmetric = TRUE)
   keep <- seq_len(k)
   sref <- sqrt(pmax(diag(L %*% as.matrix(g$vcov) %*% t(L)), 0))
   evs <- if (all(is.finite(sref)) && all(sref > 0))
     eigen(M / outer(sref, sref), symmetric = TRUE, only.values = TRUE)$values else
       rep(0, q)
-  if (any(!is.finite(evs)) || any(evs[keep] <= 1e-10) ||
+  if (any(!is.finite(evs)) || any(evs[keep] <= 1e-6) ||
       any(ev$values[keep] <= 0))
     stop("the covariance of the contrast is singular on its range: under the ",
          type, " covariance some tested combination has no sampling ",

@@ -194,3 +194,76 @@ test_that("the adequacy of a directed support is tested along its ordering", {
   expect_identical(unname(a$statistic), unname(mc_wald_graph(sat, L)$statistic))
   expect_gt(a$p.value, 0.001)
 })
+
+test_that("mc_test_independence passes method to the two-stage variance", {
+  skip_on_cran()
+  skip_if_not_installed("MASS")
+  for (kind in c("gaussian", "tweedie")) {
+    f <- route_fit(kind)
+    ep <- f$graph$edge_pos
+    th <- f$graph$par[ep]
+    L <- matrix(0, length(ep), length(f$graph$par))
+    L[cbind(seq_along(ep), ep)] <- 1
+    W <- list()
+    for (m in c("auto", "shortcut", "full")) {
+      V <- as.matrix(mc_vcov_graph(f, "two_stage", method = m))
+      ref <- drop(t(th) %*% solve(V[ep, ep]) %*% th)
+      t1 <- mc_test_independence(f, type = "two_stage", method = m)
+      expect_equal(unname(t1$statistic), ref, tolerance = 1e-10,
+                   info = paste(kind, m))
+      expect_identical(unname(t1$statistic),
+                       unname(mc_wald_graph(f, L, 0, type = "two_stage",
+                                            method = m)$statistic),
+                       info = paste(kind, m))
+      W[[m]] <- unname(t1$statistic)
+    }
+    expect_identical(unname(mc_test_independence(f, type = "two_stage")$statistic),
+                     W$auto)
+    # the argument reaches the variance only where the routes differ
+    if (kind == "tweedie") {
+      expect_identical(W$auto, W$full)
+      expect_false(isTRUE(all.equal(W$shortcut, W$full, tolerance = 1e-12)))
+    } else {
+      expect_identical(W$auto, W$shortcut)
+    }
+  }
+})
+
+test_that("mc_test_independence refuses a route for the other covariances", {
+  skip_if_not_installed("MASS")
+  f <- wald_fit()
+  expect_error(mc_test_independence(f, method = "full"), "has no meaning")
+  expect_error(mc_test_independence(f, robust = TRUE, method = "shortcut"),
+               "has no meaning")
+  expect_error(mc_test_independence(f, type = "sandwich", method = "full"),
+               "has no meaning")
+  expect_error(mc_test_independence(f, type = "two_stage", method = "fast"),
+               "should be one of")
+  expect_identical(mc_test_independence(f, method = "auto")$statistic,
+                   mc_test_independence(f)$statistic)
+  # order of the formals, method last
+  expect_identical(names(formals(mc_test_independence)),
+                   c("fit", "robust", "cluster", "small_sample", "type",
+                     "method"))
+  expect_identical(mc_test_independence(f, TRUE, NULL, FALSE)$statistic,
+                   mc_test_independence(f, robust = TRUE, cluster = NULL,
+                                        small_sample = FALSE)$statistic)
+})
+
+test_that("the root innovation variance of a mean-dependent DAG is refused under every route", {
+  skip_on_cran()
+  skip_if_not_installed("MASS")
+  chain <- mc_between_graph("dag", rbind(c(1, 2), c(2, 3)))
+  for (kind in c("tweedie", "count")) {
+    f <- route_fit(kind, between_graph = chain)
+    for (m in c("shortcut", "full", "auto"))
+      expect_error(mc_wald_graph(f, "delta_1", rhs = 1, type = "two_stage",
+                                 method = m), "singular on its range",
+                   info = paste(kind, m))
+    # a coefficient the second stage estimates keeps its test under every route
+    for (m in c("shortcut", "full", "auto")) {
+      w <- mc_wald_graph(f, "gamma_21", type = "two_stage", method = m)
+      expect_true(is.finite(w$statistic) && w$statistic >= 0, info = paste(kind, m))
+    }
+  }
+})

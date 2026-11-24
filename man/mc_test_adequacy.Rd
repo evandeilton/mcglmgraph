@@ -33,10 +33,13 @@ variability by \eqn{G/(G-1)}, with \eqn{G} the number of clusters. It has
 no effect without \code{cluster} and is refused with
 \code{type = "model"}.}
 
-\item{method}{for \code{type = "two_stage"}, \code{"auto"} (the shortcut
-when it applies, the full form otherwise; on a DAG with an immorality, the
-full form whenever it is available), \code{"shortcut"} or \code{"full"}.
-It has no meaning for the other two types.}
+\item{method}{for \code{type = "two_stage"}, the route of the correction:
+\code{"shortcut"}, \code{"full"}, or \code{"auto"} (default).
+\code{"auto"} takes the full form when it is available and either a
+response has a variance function other than \code{"constant"} or the fitted
+DAG has an immorality; in every other case it takes the shortcut when it
+applies and the full form when it does not. The full form rebuilds the
+first stage and is slower. It has no meaning for the other two types.}
 }
 \value{
 An object of class \code{"htest"} as in \code{\link{mc_wald_graph}},
