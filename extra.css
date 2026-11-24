@@ -1,0 +1,122 @@
+/* mcglmgraph site theme: the three logo hues (teal, lavender, pink) on a
+   light surface. Saturated tones carry text; the pale tints carry surfaces. */
+:root {
+  --mg-ink: #0f172a;
+  --mg-text: #1e293b;
+  --mg-muted: #64748b;
+  --mg-rule: #e2e8f0;
+  --mg-teal: #0f766e;
+  --mg-indigo: #4338ca;
+  --mg-pink: #be185d;
+  --mg-teal-l: #5eead4;
+  --mg-indigo-l: #a5b4fc;
+  --mg-pink-l: #f9a8d4;
+  --mg-teal-tint: #f0fdfa;
+  --mg-indigo-tint: #eef2ff;
+  --mg-pink-tint: #fdf2f8;
+  --mg-grad: linear-gradient(90deg, var(--mg-teal-l), var(--mg-indigo-l) 50%, var(--mg-pink-l));
+}
+
+/* Page surface: white, with three faint washes of the logo tints at the top */
+body {
+  color: var(--mg-text);
+  background:
+    radial-gradient(900px 360px at 12% -90px, var(--mg-indigo-tint) 0, transparent 72%),
+    radial-gradient(800px 320px at 55% -120px, var(--mg-teal-tint) 0, transparent 72%),
+    radial-gradient(800px 340px at 92% -90px, var(--mg-pink-tint) 0, transparent 72%),
+    #ffffff;
+  background-repeat: no-repeat;
+}
+
+/* Navbar: white, with the logo gradient as a thin rule underneath */
+.navbar {
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: saturate(160%) blur(8px);
+  border-bottom: 0;
+  box-shadow: 0 1px 0 var(--mg-rule);
+  position: relative;
+}
+.navbar::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 3px;
+  background: var(--mg-grad);
+}
+.navbar .navbar-brand {
+  font-family: "Space Grotesk", sans-serif; font-weight: 700; color: var(--mg-ink) !important;
+  letter-spacing: -0.2px;
+}
+.navbar .nav-link { color: var(--mg-text) !important; font-weight: 500; border-radius: 0.4rem; }
+.navbar .nav-link:hover, .navbar .nav-link:focus { color: var(--mg-indigo) !important; background: var(--mg-indigo-tint); }
+.navbar .nav-link.active, .navbar .nav-item.active > .nav-link {
+  color: var(--mg-indigo) !important; background: var(--mg-indigo-tint);
+}
+.navbar .text-muted, .navbar small { color: var(--mg-muted) !important; }
+.navbar .dropdown-item:hover, .navbar .dropdown-item:focus { background: var(--mg-indigo-tint); color: var(--mg-indigo); }
+
+/* Headings */
+h1, h2, h3, h4, .h1, .h2, .h3, .h4 { letter-spacing: -0.3px; }
+main h2 { margin-top: 2.2rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--mg-rule); }
+.page-header { border-bottom: 0; }
+.page-header h1 { font-weight: 700; }
+
+/* Links */
+a { text-decoration-color: color-mix(in srgb, var(--mg-indigo) 35%, transparent); text-underline-offset: 2px; }
+a:hover { color: var(--mg-pink); text-decoration-color: var(--mg-pink-l); }
+
+/* Inline code and code blocks */
+code { color: var(--mg-teal); background: var(--mg-teal-tint); border-radius: 0.3rem; padding: 0.1em 0.3em; }
+a code, a > code { color: var(--mg-indigo); background: var(--mg-indigo-tint); }
+pre, pre.sourceCode, div.sourceCode {
+  background: #f8fafc; border: 1px solid var(--mg-rule); border-radius: 0.6rem;
+}
+div.sourceCode { border-left: 3px solid var(--mg-indigo-l); }
+/* one frame per block: the inner pre carries no border of its own */
+div.sourceCode > pre, div.sourceCode pre.sourceCode { border: 0; background: transparent; margin: 0; border-radius: 0; }
+pre code { background: transparent; color: inherit; padding: 0; }
+pre.r-out, .downlit pre.r-out { border-left: 3px solid var(--mg-teal-l); }
+
+/* Tables */
+table { border-color: var(--mg-rule); }
+main table thead th { color: var(--mg-ink); border-bottom: 2px solid var(--mg-indigo-l); background: var(--mg-indigo-tint); }
+
+/* Reference index: section titles carry a gradient marker */
+.template-reference-index main h2 {
+  border-bottom: 0; display: flex; align-items: center; gap: 0.5rem;
+}
+.template-reference-index main h2::before {
+  content: ""; width: 4px; height: 1.1em; border-radius: 2px; background: var(--mg-grad);
+}
+.template-reference-index dt { font-weight: 500; }
+.template-reference-index dt code { background: transparent; padding: 0; }
+
+/* Sidebar and table of contents */
+aside h2, aside .h2, #toc h2 {
+  font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--mg-muted); border-bottom: 1px solid var(--mg-rule); padding-bottom: 0.3rem;
+}
+#toc .nav a { color: var(--mg-text); border-radius: 0.3rem; }
+#toc .nav a:hover { color: var(--mg-indigo); background: var(--mg-indigo-tint); }
+#toc .nav a.active, aside .nav-link.active {
+  color: var(--mg-indigo) !important; background: var(--mg-indigo-tint) !important; font-weight: 600;
+}
+
+/* Buttons */
+.btn-primary { background: var(--mg-indigo); border-color: var(--mg-indigo); }
+.btn-primary:hover { background: #3730a3; border-color: #3730a3; }
+.btn-outline-primary { color: var(--mg-indigo); border-color: var(--mg-indigo-l); }
+.btn-outline-primary:hover { background: var(--mg-indigo-tint); color: var(--mg-indigo); border-color: var(--mg-indigo); }
+
+/* Home page: logo and lead paragraph */
+.template-home img.logo, img.logo { filter: drop-shadow(0 6px 14px rgba(67, 56, 202, 0.18)); }
+
+/* Search field */
+input[type="search"], .form-control { border-color: var(--mg-rule); border-radius: 0.5rem; }
+input[type="search"]:focus, .form-control:focus {
+  border-color: var(--mg-indigo-l); box-shadow: 0 0 0 0.2rem rgba(165, 180, 252, 0.35);
+}
+
+/* Footer */
+footer { border-top: 0; color: var(--mg-muted); position: relative; padding-top: 1.2rem; }
+footer::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+  background: var(--mg-grad); opacity: 0.7;
+}
