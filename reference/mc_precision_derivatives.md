@@ -2,9 +2,10 @@
 
 Returns the derivatives of \\\Sigma_b = K_b^{-1}\\ with respect to the
 precision parameters, \$\$\frac{\partial \Sigma_b}{\partial \eta_d} =
--\Sigma_b Z_d \Sigma_b, \qquad d = 1, \dots, D,\$\$ which follow from
-\\\partial K_b^{-1} = -K_b^{-1}(\partial K_b)K_b^{-1}\\ and \\\partial
-K_b/\partial\eta_d = Z_d\\. Each matrix is symmetrized.
+-\Sigma_b Z_d \Sigma_b, \qquad d = 1, \dots, q\_{\mathcal G},\$\$ with
+\\q\_{\mathcal G} = R + \|E\|\\ the number of graph parameters, which
+follow from \\\partial K_b^{-1} = -K_b^{-1}(\partial K_b)K_b^{-1}\\ and
+\\\partial K_b/\partial\eta_d = Z_d\\. Each matrix is symmetrized.
 
 ## Usage
 
@@ -24,8 +25,8 @@ mc_precision_derivatives(Sigma_b, bases)
 
 ## Value
 
-A list of \\D\\ symmetric \\R \times R\\ matrices in the order of
-`bases`.
+A list of \\q\_{\mathcal G}\\ symmetric \\R \times R\\ matrices in the
+order of `bases`.
 
 ## See also
 

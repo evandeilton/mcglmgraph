@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mcglmgraph</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,16 @@
       <small>Source: <a href="https://github.com/evandeilton/mcglmgraph/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.8.3" id="mcglmgraph-083">mcglmgraph 0.8.3<a class="anchor" aria-label="anchor" href="#mcglmgraph-083"></a></h2>
+<ul><li>
+<code><a href="../reference/mc_spd_line_search.html">mc_spd_line_search()</a></code>: the default <code>max_halvings</code> is 30, the value <code><a href="../reference/mcglm_graph.html">mcglm_graph()</a></code> uses internally.</li>
+<li>
+<code><a href="../reference/mc_partial_cor_delta.html">mc_partial_cor_delta()</a></code>: a pair outside the specified support (an absent GGM edge, or a pair outside the moral graph of a DAG) returns <code>pcor = 0</code> and <code>NA</code> for <code>se</code>, <code>statistic</code>, <code>p_value</code>, <code>lower</code> and <code>upper</code>, and its row of the <code>"gradient"</code> attribute is <code>NA</code>. Rows of present pairs are unchanged.</li>
+<li>
+<code><a href="../reference/mc_partial_cor_delta.html">mc_partial_cor_delta()</a></code>: a pair whose partial correlation is undefined (a nonpositive product of precision diagonals) returns <code>NA</code> in <code>pcor</code> and in the inference columns instead of 0. A variance that is negative beyond rounding, because the covariance of the parameters is not positive semidefinite, gives <code>NA</code> rather than 0.</li>
+<li>Renamed, with no alias: the attribute <code>centre</code> of <code>mc_vcov_graph(type = "two_stage")</code> is now <code>center</code>, and the column <code>prop_centre</code> of the v-structure tables of <code><a href="../reference/mc_find_vstructures.html">mc_find_vstructures()</a></code> and <code><a href="../reference/mc_graph_pipeline.html">mc_graph_pipeline()</a></code> is now <code>prop_center</code>.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.8.2" id="mcglmgraph-082">mcglmgraph 0.8.2<a class="anchor" aria-label="anchor" href="#mcglmgraph-082"></a></h2>
 <ul><li><p><code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> on an <code>mcglm_graph</code> object accepts the <code>type</code> values of <code>coef.mcglm()</code> (<code>"beta"</code>, <code>"tau"</code>, <code>"power"</code>, <code>"correlation"</code>), so <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> prints the first-stage tables before the graph layer and <code><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova()</a></code> works. A failure of the first-stage summary raises a warning.</p></li>

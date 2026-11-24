@@ -52,11 +52,11 @@ mc_find_vstructures(
 ## Value
 
 A data frame with columns `i`, `k`, `j`, `is_collider`, `applied`,
-`ambiguous`, `n_sets`, `prop_centre`, `pcor` and `p_value`. The last two
+`ambiguous`, `n_sets`, `prop_center`, `pcor` and `p_value`. The last two
 refer to the test of \\i\\ and \\j\\ given the set the skeleton
 recorded; `applied` is `FALSE` for a collider whose orientation was
 withheld because another collider required the opposite direction on one
-of its edges. Under `"standard"` the columns `n_sets` and `prop_centre`
+of its edges. Under `"standard"` the columns `n_sets` and `prop_center`
 are `NA`, since no collection is formed.
 
 ## The three rules
@@ -112,7 +112,7 @@ d <- data.frame(y1 = z1, y2 = z2, y3 = z3, x = rnorm(n))
 f <- mcglm_graph(list(y1~x, y2~x, y3~x), data = d)
 #> Automatic initial values selected.
 mc_find_vstructures(f)
-#>   i k j is_collider applied ambiguous n_sets prop_centre       pcor   p_value
+#>   i k j is_collider applied ambiguous n_sets prop_center       pcor   p_value
 #> 1 1 3 2        TRUE    TRUE     FALSE     NA          NA 0.03574128 0.3823036
 # }
 ```

@@ -201,27 +201,62 @@ round(mc_partial_cor(fit_hunt), 3)
 #>       OT    BD
 #> OT  1.00 -0.15
 #> BD -0.15  1.00
+# Naive test, as if the 1216 records were independent
 mc_test_independence(fit_hunt)
 #> 
 #>  Wald test of between-response conditional association
 #> 
 #> data:  GGM layer with 1 edges
 #> X-squared = 26.626, df = 1, p-value = 2.469e-07
+# Sampling unit: the hunter. The contributions of the records of one hunter
+# are summed, and the first-stage estimation is propagated by the full form
+V_hunt <- mc_vcov_graph(fit_hunt, type = "two_stage", method = "full",
+                        cluster = Hunting$HUNTER, small_sample = TRUE)
+mc_wald_graph(fit_hunt, "eta_12", type = "two_stage", method = "full",
+              cluster = Hunting$HUNTER, small_sample = TRUE)
+#> 
+#>  Wald test of 1 linear restriction on the graph layer (two_stage
+#>  covariance)
+#> 
+#> data:  GGM layer with 3 parameters
+#> X-squared = 6.4139, df = 1, p-value = 0.01132
+#> sample estimates:
+#> [1] 0.1539221
+# Delta-method interval for the partial correlation -eta_12/sqrt(eta_11 eta_22)
+eta <- coef(fit_hunt, type = "graph")
+pc  <- -eta[["eta_12"]] / sqrt(eta[["eta_11"]] * eta[["eta_22"]])
+grad <- c(eta_11 = -pc / (2 * eta[["eta_11"]]),
+          eta_22 = -pc / (2 * eta[["eta_22"]]),
+          eta_12 = -1 / sqrt(eta[["eta_11"]] * eta[["eta_22"]]))
+se <- sqrt(drop(grad %*% V_hunt[names(grad), names(grad)] %*% grad))
+round(c(pcor = pc, se = se, lower = pc - qnorm(0.975) * se,
+        upper = pc + qnorm(0.975) * se), 3)
+#>   pcor     se  lower  upper 
+#> -0.150  0.057 -0.261 -0.039
 ```
 
-**Interpretation.** The partial correlation between the two catch types
-is negative and modest in size. Once hunting effort (the offset) and
-hunter sex are taken into account, catching more blue duikers does not
-come with catching more of the other animals; the sign points to a mild
-substitution effect. The Wald test rejects absence of second-order
-conditional association, but it should be read with caution here: the
-specification above treats the records as independent, while the same
-hunters are observed over several months, and within-response dependence
-that is left out of the first stage can make the standard errors of the
-graph layer too small. A within-response structure for the repeated
-records, or an empirical variance from
-[`mc_vcov_graph()`](https://evandeilton.github.io/mcglmgraph/reference/mc_vcov_graph.md)
-with the `cluster` argument, respects the sampling unit.
+**Interpretation.** The same hunters are observed over several months,
+so the sampling unit is the hunter (52 clusters), not the monthly
+record. The inference above therefore uses the two-stage variance, which
+sums the contributions within each hunter and accounts for the
+estimation of the first stage, with the small-sample factor $`G/(G-1)`$.
+The variance of these counts depends on the mean, and the shortcut would
+then need a correctly specified mean and a residual covariance free of
+the covariates, which cannot be read off the fit; the correction is
+therefore formed from the first-stage contributions themselves
+(`method = "full"`), which needs neither. The partial correlation
+between the two catch types is $`-0.150`$: once hunting effort (the
+offset) and sex are taken into account, a record with more blue duikers
+than its fitted mean tends to have fewer of the other animals than its
+fitted mean, a mild second-order association. The naive Wald test, which
+treats the records as independent, gives $`W = 26.6`$ ($`p < 0.001`$);
+with the hunter as cluster the statistic falls to $`W = 6.4`$
+($`p = 0.011`$), so the evidence is much weaker than the naive test
+suggests, although the association is still detected. The delta-method
+95% interval for the partial correlation under the same variance runs
+from $`-0.261`$ to $`-0.039`$. This is a statement about the
+second-order association of the Pearson residuals, not about
+substitution or any causal mechanism.
 
 ------------------------------------------------------------------------
 

@@ -1,5 +1,30 @@
 # Changelog
 
+## mcglmgraph 0.8.3
+
+- [`mc_spd_line_search()`](https://evandeilton.github.io/mcglmgraph/reference/mc_spd_line_search.md):
+  the default `max_halvings` is 30, the value
+  [`mcglm_graph()`](https://evandeilton.github.io/mcglmgraph/reference/mcglm_graph.md)
+  uses internally.
+- [`mc_partial_cor_delta()`](https://evandeilton.github.io/mcglmgraph/reference/mc_partial_cor_delta.md):
+  a pair outside the specified support (an absent GGM edge, or a pair
+  outside the moral graph of a DAG) returns `pcor = 0` and `NA` for
+  `se`, `statistic`, `p_value`, `lower` and `upper`, and its row of the
+  `"gradient"` attribute is `NA`. Rows of present pairs are unchanged.
+- [`mc_partial_cor_delta()`](https://evandeilton.github.io/mcglmgraph/reference/mc_partial_cor_delta.md):
+  a pair whose partial correlation is undefined (a nonpositive product
+  of precision diagonals) returns `NA` in `pcor` and in the inference
+  columns instead of 0. A variance that is negative beyond rounding,
+  because the covariance of the parameters is not positive semidefinite,
+  gives `NA` rather than 0.
+- Renamed, with no alias: the attribute `centre` of
+  `mc_vcov_graph(type = "two_stage")` is now `center`, and the column
+  `prop_centre` of the v-structure tables of
+  [`mc_find_vstructures()`](https://evandeilton.github.io/mcglmgraph/reference/mc_find_vstructures.md)
+  and
+  [`mc_graph_pipeline()`](https://evandeilton.github.io/mcglmgraph/reference/mc_graph_pipeline.md)
+  is now `prop_center`.
+
 ## mcglmgraph 0.8.2
 
 - [`coef()`](https://rdrr.io/r/stats/coef.html) on an `mcglm_graph`

@@ -18,7 +18,7 @@ calls the same search with 30 halvings.
 ## Usage
 
 ``` r
-mc_spd_line_search(eta_old, delta_eta, bases, max_halvings = 20L)
+mc_spd_line_search(eta_old, delta_eta, bases, max_halvings = 30L)
 ```
 
 ## Arguments
@@ -39,7 +39,7 @@ mc_spd_line_search(eta_old, delta_eta, bases, max_halvings = 20L)
 
 - max_halvings:
 
-  maximum number \\k\_{\max}\\ of step halvings (default 20), so that at
+  maximum number \\k\_{\max}\\ of step halvings (default 30), so that at
   most `max_halvings + 1` steps are tried.
 
 ## Value

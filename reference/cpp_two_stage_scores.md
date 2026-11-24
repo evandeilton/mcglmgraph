@@ -33,4 +33,4 @@ cpp_two_stage_scores(Psi, K, Dlist, Ec)
 ## Value
 
 list with `scores` (n x P), the factor `Q` (P x R) applied, already
-divided by m_r, and `centre`, the vector of the R averages m.
+divided by m_r, and `center`, the vector of the R averages m.

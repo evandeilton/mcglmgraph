@@ -2,8 +2,9 @@
 
 Constructs the base matrices \\Z_d\\ of the linear-in-precision
 predictor of the Gaussian graphical model (GGM) layer, \$\$K_b =
-\sum\_{d=1}^{D} \eta_d Z_d,\qquad \Sigma_b = K_b^{-1},\$\$ where \\K_b\\
-is the between-response precision matrix and \\D = R + \|E\|\\. There
+\sum\_{d=1}^{q\_{\mathcal G}} \eta_d Z_d,\qquad \Sigma_b = K_b^{-1},\$\$
+where \\K_b\\ is the between-response precision matrix and
+\\q\_{\mathcal G} = R + \|E\|\\ is the number of graph parameters. There
 are \\R\\ diagonal bases \\Z\_{kk} = e_k e_k^\top\\ and one symmetric
 base \\Z\_{ij} = e_i e_j^\top + e_j e_i^\top\\ per edge \\(i, j)\\, so
 that \\\eta\_{kk} = \[K_b\]\_{kk}\\ and \\\eta\_{ij} = \[K_b\]\_{ij}\\.
@@ -34,10 +35,11 @@ mc_precision_bases(R, edges = NULL)
 ## Value
 
 An object of class `"mcg_bases"`: a list with components `bases` (list
-of \\D\\ symmetric \\R \times R\\ matrices), `cube` (the same bases as
-an \\R \times R \times D\\ array, the form consumed by the C++ kernels),
-`names` (parameter names `eta_kk` and `eta_ij`), `type` (`"diag"` or
-`"edge"` for each base), `edges` (the canonical edge matrix) and `R`.
+of \\q\_{\mathcal G}\\ symmetric \\R \times R\\ matrices), `cube` (the
+same bases as an \\R \times R \times q\_{\mathcal G}\\ array, the form
+consumed by the C++ kernels), `names` (parameter names `eta_kk` and
+`eta_ij`), `type` (`"diag"` or `"edge"` for each base), `edges` (the
+canonical edge matrix) and `R`.
 
 ## References
 

@@ -17,8 +17,9 @@ mc_build_precision(eta, bases)
 
 - eta:
 
-  numeric vector of length \\D = R + \|E\|\\: the diagonal parameters
-  first, then the edge parameters, in the order of `bases`.
+  numeric vector of length \\q\_{\mathcal G} = R + \|E\|\\, the number
+  of graph parameters: the diagonal parameters first, then the edge
+  parameters, in the order of `bases`.
 
 - bases:
 

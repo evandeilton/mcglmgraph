@@ -10,7 +10,7 @@ that produced eta_new.
 ## Usage
 
 ``` r
-cpp_spd_line_search(eta, d, bases, max_halvings = 20L, tol = 1e-10)
+cpp_spd_line_search(eta, d, bases, max_halvings = 30L, tol = 1e-10)
 ```
 
 ## Arguments
@@ -25,11 +25,12 @@ cpp_spd_line_search(eta, d, bases, max_halvings = 20L, tol = 1e-10)
 
 - bases:
 
-  numeric cube R x R x D of base matrices Z_d.
+  numeric cube R x R x q_G of base matrices Z_d, with q_G the number of
+  graph parameters.
 
 - max_halvings:
 
-  maximum number of step halvings (default 20).
+  maximum number of step halvings (default 30).
 
 - tol:
 

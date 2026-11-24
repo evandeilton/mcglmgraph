@@ -12,11 +12,12 @@ cpp_build_precision(eta, bases)
 
 - eta:
 
-  numeric vector of length D (diagonal then edge parameters).
+  numeric vector of length q_G, the number of graph parameters (diagonal
+  then edge parameters).
 
 - bases:
 
-  numeric cube R x R x D of symmetric base matrices Z_d.
+  numeric cube R x R x q_G of symmetric base matrices Z_d.
 
 ## Value
 

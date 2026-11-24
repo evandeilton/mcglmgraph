@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mcglmgraph</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -252,25 +252,69 @@ two catch types remain conditionally associated in second order.</p>
 <span><span class="co">#&gt;       OT    BD</span></span>
 <span><span class="co">#&gt; OT  1.00 -0.15</span></span>
 <span><span class="co">#&gt; BD -0.15  1.00</span></span>
+<span><span class="co"># Naive test, as if the 1216 records were independent</span></span>
 <span><span class="fu"><a href="../reference/mc_test_independence.html">mc_test_independence</a></span><span class="op">(</span><span class="va">fit_hunt</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  Wald test of between-response conditional association</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; data:  GGM layer with 1 edges</span></span>
-<span><span class="co">#&gt; X-squared = 26.626, df = 1, p-value = 2.469e-07</span></span></code></pre></div>
-<p><strong>Interpretation.</strong> The partial correlation between the
-two catch types is negative and modest in size. Once hunting effort (the
-offset) and hunter sex are taken into account, catching more blue
-duikers does not come with catching more of the other animals; the sign
-points to a mild substitution effect. The Wald test rejects absence of
-second-order conditional association, but it should be read with caution
-here: the specification above treats the records as independent, while
-the same hunters are observed over several months, and within-response
-dependence that is left out of the first stage can make the standard
-errors of the graph layer too small. A within-response structure for the
-repeated records, or an empirical variance from
-<code><a href="../reference/mc_vcov_graph.html">mc_vcov_graph()</a></code> with the <code>cluster</code> argument,
-respects the sampling unit.</p>
+<span><span class="co">#&gt; X-squared = 26.626, df = 1, p-value = 2.469e-07</span></span>
+<span><span class="co"># Sampling unit: the hunter. The contributions of the records of one hunter</span></span>
+<span><span class="co"># are summed, and the first-stage estimation is propagated by the full form</span></span>
+<span><span class="va">V_hunt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mc_vcov_graph.html">mc_vcov_graph</a></span><span class="op">(</span><span class="va">fit_hunt</span>, type <span class="op">=</span> <span class="st">"two_stage"</span>, method <span class="op">=</span> <span class="st">"full"</span>,</span>
+<span>                        cluster <span class="op">=</span> <span class="va">Hunting</span><span class="op">$</span><span class="va">HUNTER</span>, small_sample <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/mc_wald_graph.html">mc_wald_graph</a></span><span class="op">(</span><span class="va">fit_hunt</span>, <span class="st">"eta_12"</span>, type <span class="op">=</span> <span class="st">"two_stage"</span>, method <span class="op">=</span> <span class="st">"full"</span>,</span>
+<span>              cluster <span class="op">=</span> <span class="va">Hunting</span><span class="op">$</span><span class="va">HUNTER</span>, small_sample <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;  Wald test of 1 linear restriction on the graph layer (two_stage</span></span>
+<span><span class="co">#&gt;  covariance)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; data:  GGM layer with 3 parameters</span></span>
+<span><span class="co">#&gt; X-squared = 6.4139, df = 1, p-value = 0.01132</span></span>
+<span><span class="co">#&gt; sample estimates:</span></span>
+<span><span class="co">#&gt; [1] 0.1539221</span></span>
+<span><span class="co"># Delta-method interval for the partial correlation -eta_12/sqrt(eta_11 eta_22)</span></span>
+<span><span class="va">eta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">fit_hunt</span>, type <span class="op">=</span> <span class="st">"graph"</span><span class="op">)</span></span>
+<span><span class="va">pc</span>  <span class="op">&lt;-</span> <span class="op">-</span><span class="va">eta</span><span class="op">[[</span><span class="st">"eta_12"</span><span class="op">]</span><span class="op">]</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">eta</span><span class="op">[[</span><span class="st">"eta_11"</span><span class="op">]</span><span class="op">]</span> <span class="op">*</span> <span class="va">eta</span><span class="op">[[</span><span class="st">"eta_22"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">grad</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>eta_11 <span class="op">=</span> <span class="op">-</span><span class="va">pc</span> <span class="op">/</span> <span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">eta</span><span class="op">[[</span><span class="st">"eta_11"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>          eta_22 <span class="op">=</span> <span class="op">-</span><span class="va">pc</span> <span class="op">/</span> <span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">eta</span><span class="op">[[</span><span class="st">"eta_22"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>          eta_12 <span class="op">=</span> <span class="op">-</span><span class="fl">1</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">eta</span><span class="op">[[</span><span class="st">"eta_11"</span><span class="op">]</span><span class="op">]</span> <span class="op">*</span> <span class="va">eta</span><span class="op">[[</span><span class="st">"eta_22"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/drop.html" class="external-link">drop</a></span><span class="op">(</span><span class="va">grad</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">V_hunt</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">grad</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">grad</span><span class="op">)</span><span class="op">]</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">grad</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>pcor <span class="op">=</span> <span class="va">pc</span>, se <span class="op">=</span> <span class="va">se</span>, lower <span class="op">=</span> <span class="va">pc</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">qnorm</a></span><span class="op">(</span><span class="fl">0.975</span><span class="op">)</span> <span class="op">*</span> <span class="va">se</span>,</span>
+<span>        upper <span class="op">=</span> <span class="va">pc</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">qnorm</a></span><span class="op">(</span><span class="fl">0.975</span><span class="op">)</span> <span class="op">*</span> <span class="va">se</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   pcor     se  lower  upper </span></span>
+<span><span class="co">#&gt; -0.150  0.057 -0.261 -0.039</span></span></code></pre></div>
+<p><strong>Interpretation.</strong> The same hunters are observed over
+several months, so the sampling unit is the hunter (52 clusters), not
+the monthly record. The inference above therefore uses the two-stage
+variance, which sums the contributions within each hunter and accounts
+for the estimation of the first stage, with the small-sample factor
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi><mi>/</mi><mo stretchy="false" form="prefix">(</mo><mi>G</mi><mo>−</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">G/(G-1)</annotation></semantics></math>.
+The variance of these counts depends on the mean, and the shortcut would
+then need a correctly specified mean and a residual covariance free of
+the covariates, which cannot be read off the fit; the correction is
+therefore formed from the first-stage contributions themselves
+(<code>method = "full"</code>), which needs neither. The partial
+correlation between the two catch types is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>−</mi><mn>0.150</mn></mrow><annotation encoding="application/x-tex">-0.150</annotation></semantics></math>:
+once hunting effort (the offset) and sex are taken into account, a
+record with more blue duikers than its fitted mean tends to have fewer
+of the other animals than its fitted mean, a mild second-order
+association. The naive Wald test, which treats the records as
+independent, gives
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi><mo>=</mo><mn>26.6</mn></mrow><annotation encoding="application/x-tex">W = 26.6</annotation></semantics></math>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>&lt;</mo><mn>0.001</mn></mrow><annotation encoding="application/x-tex">p &lt; 0.001</annotation></semantics></math>);
+with the hunter as cluster the statistic falls to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi><mo>=</mo><mn>6.4</mn></mrow><annotation encoding="application/x-tex">W = 6.4</annotation></semantics></math>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.011</mn></mrow><annotation encoding="application/x-tex">p = 0.011</annotation></semantics></math>),
+so the evidence is much weaker than the naive test suggests, although
+the association is still detected. The delta-method 95% interval for the
+partial correlation under the same variance runs from
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>−</mi><mn>0.261</mn></mrow><annotation encoding="application/x-tex">-0.261</annotation></semantics></math>
+to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>−</mi><mn>0.039</mn></mrow><annotation encoding="application/x-tex">-0.039</annotation></semantics></math>.
+This is a statement about the second-order association of the Pearson
+residuals, not about substitution or any causal mechanism.</p>
 <hr>
 </div>
 <div class="section level2">

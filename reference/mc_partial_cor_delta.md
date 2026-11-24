@@ -93,11 +93,18 @@ and columns `response1`, `response2`, `present` (logical support
 indicator), `pcor` (the partial correlation), `se` (standard error),
 `statistic` (Wald statistic `pcor / se`, `NA` when the standard error is
 exactly zero), `p_value` (two-sided, normal reference) and `lower`,
-`upper` (interval bounds). The rows follow the pairs \\(i, j)\\, \\i \<
-j\\, in lexicographic order. The attribute `"gradient"` holds the matrix
-of gradients \\\mathbf g\_{ij}\\, with one row per pair and one column
-per graph parameter, and the attributes `"variability"`, `"level"` and
-`"interval"` record the choices used.
+`upper` (interval bounds). A pair with `present = FALSE` has `pcor = 0`
+and `NA` in `se`, `statistic`, `p_value`, `lower` and `upper`. A pair
+whose partial correlation is undefined (a nonpositive product of
+precision diagonals) has `NA` in `pcor` and in the same columns. When
+the covariance of the parameters is not positive semidefinite, `se` and
+what follows from it are `NA`. The rows follow the pairs \\(i, j)\\, \\i
+\< j\\, in lexicographic order. The attribute `"gradient"` holds the
+matrix of gradients \\\mathbf g\_{ij}\\, with one row per pair and one
+column per graph parameter, the row being `NA` for a pair with
+`present = FALSE` or an undefined partial correlation, and the
+attributes `"variability"`, `"level"` and `"interval"` record the
+choices used.
 
 ## Scope of the inference
 
@@ -115,16 +122,17 @@ explicitly mark graph-layer inference as uncertified.
 ## Structural zeros
 
 In the GGM layer, a pair outside the specified precision support is zero
-by construction: no parameter moves it, the gradient vanishes and the
-reported standard error is zero up to rounding error, so that the
-statistic of such a row is 0 or `NA` and carries no information. In the
-DAG layer, structural zeros of the precision are instead determined by
-the moral graph. In particular, two non-adjacent parents of a common
+by construction and has no sampling distribution. Its row reports
+`pcor = 0` and `NA` for `se`, `statistic`, `p_value`, `lower` and
+`upper`, and its row of the `"gradient"` attribute is `NA`; this is
+decided from `present` and not from the size of the standard error. In
+the DAG layer, structural zeros of the precision are instead determined
+by the moral graph. In particular, two non-adjacent parents of a common
 child can have a nonzero precision entry even though no arrow joins
 them. Therefore `present` denotes adjacency in the specified GGM support
 or in the moral graph of the specified DAG. Rows with `present = FALSE`
-are structural constraints and should not be read as precise estimates
-of a null association; a `TRUE` value says only that the entry is
+are structural constraints, not estimates of a null association, and
+carry no inference; a `TRUE` value says only that the entry is
 structurally allowed, since parameter cancellation can still make it
 zero.
 

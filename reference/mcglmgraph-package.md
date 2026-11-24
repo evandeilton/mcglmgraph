@@ -173,6 +173,16 @@ Spirtes, P., Glymour, C. and Scheines, R. (2000). *Causation,
 Prediction, and Search*, 2nd edition. MIT Press, Cambridge,
 Massachusetts.
 
+## See also
+
+Useful links:
+
+- <https://github.com/evandeilton/mcglmgraph>
+
+- <https://evandeilton.github.io/mcglmgraph/>
+
+- Report bugs at <https://github.com/evandeilton/mcglmgraph/issues>
+
 ## Author
 
 **Maintainer**: Jose Evandeilton Lopes <evandeilton@gmail.com>

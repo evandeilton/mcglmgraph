@@ -21,7 +21,7 @@ vector."><meta property="og:image" content="https://evandeilton.github.io/mcglmg
 
     <a class="navbar-brand me-2" href="../index.html">mcglmgraph</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,7 +73,7 @@ vector.</p>
 
 
 <dt id="arg-sdot">Sdot<a class="anchor" aria-label="anchor" href="#arg-sdot"></a></dt>
-<dd><p>list of D matrices dSigma_b/dtheta_d.</p></dd>
+<dd><p>list of q_G matrices dSigma_b/dtheta_d, one per graph parameter.</p></dd>
 
 
 <dt id="arg-pairs">pairs<a class="anchor" aria-label="anchor" href="#arg-pairs"></a></dt>
@@ -81,13 +81,13 @@ vector.</p>
 
 
 <dt id="arg-v">V<a class="anchor" aria-label="anchor" href="#arg-v"></a></dt>
-<dd><p>estimated D x D covariance matrix of the parameter vector.</p></dd>
+<dd><p>estimated q_G x q_G covariance matrix of the parameter vector.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>list with pcor (length q), variance (length q) and gradient (the
-  q x D matrix of gradients g).</p>
+  q x q_G matrix of gradients g).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -97,9 +97,12 @@ parametrization. In the GGM layer it returns exactly the canonical base
 Z_d; in the DAG layer it supplies the corresponding directions for
 (gamma, delta) without changing the formula.</p>
 <p>K is assumed positive definite and is not checked. For a pair with
-K_ii K_jj &lt;= 0 the kernel returns rho = 0, a non-finite gradient and a
-variance of zero. A quadratic form g' V g that is negative or not finite is
-returned as zero.</p>
+K_ii K_jj not strictly positive or not finite, the partial correlation is
+undefined: pcor, every entry of its gradient row and its variance are NA,
+and the other pairs are unaffected. A quadratic form g' V g below zero by no
+more than 1e-10 times sum |g_a| |V_ab| |g_b| is rounding error and is
+returned as zero; a more negative one means V is not positive semidefinite
+and is returned as NA, as is a non-finite one.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

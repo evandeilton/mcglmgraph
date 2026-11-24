@@ -17,8 +17,9 @@ cpp_precision_derivatives(Sigma_b, bases)
 
 - bases:
 
-  numeric cube R x R x D of base matrices Z_d.
+  numeric cube R x R x q_G of base matrices Z_d, with q_G the number of
+  graph parameters.
 
 ## Value
 
-list of D symmetric matrices, each -Sigma_b Z_d Sigma_b.
+list of q_G symmetric matrices, each -Sigma_b Z_d Sigma_b.
