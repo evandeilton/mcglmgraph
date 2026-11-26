@@ -1,3 +1,8 @@
+# mcglmgraph 0.8.6
+
+* `summary()` of a fit keeps the first-stage summary when `variability`,
+  `cluster`, `small_sample` or `method` are given, by name or by position.
+
 # mcglmgraph 0.8.5
 
 * `summary()` of a fit and `mc_dag_coefficients()` take `method`, the route of

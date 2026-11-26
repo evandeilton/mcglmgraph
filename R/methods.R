@@ -84,7 +84,11 @@ summary.mcglm_graph <- function(object,
   txt <- character(0)
   con <- textConnection("txt", "w", local = TRUE)
   sink(con)
-  first <- tryCatch(NextMethod(), error = function(e) e,
+  # The mcglm method receives the fit and the dots alone: by position the
+  # arguments of the graph layer would be taken for its verbose and print.
+  first_stage <- utils::getS3method("summary", "mcglm",
+                                    envir = asNamespace("mcglm"))
+  first <- tryCatch(first_stage(object, ...), error = function(e) e,
                     finally = { sink(); close(con) })
   if (inherits(first, "error")) {
     warning("the first-stage summary could not be produced: ",
