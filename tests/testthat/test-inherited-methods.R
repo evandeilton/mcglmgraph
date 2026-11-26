@@ -51,6 +51,38 @@ test_that("summary() prints the first stage and the graph layer", {
   expect_true(any(grepl("=== Graph layer (GGM) ===", out, fixed = TRUE)))
 })
 
+test_that("summary() keeps the first stage whatever the graph arguments", {
+  f <- inherit_fit()
+  n <- f$graph$n
+  cl <- rep(seq_len(n / 5), each = 5)
+  ref <- summary(f)
+  expect_gt(length(ref$first_stage_text), 0L)
+  same_first <- function(s) {
+    expect_identical(s$first_stage_text, ref$first_stage_text)
+    expect_equal(s$first_stage, ref$first_stage)
+  }
+  # by name and by position, the graph arguments stay in the graph layer
+  byname <- expect_no_warning(summary(f, variability = "empirical",
+                                      cluster = cl, small_sample = TRUE))
+  bypos <- expect_no_warning(summary(f, "empirical", cl, TRUE))
+  same_first(byname)
+  same_first(bypos)
+  expect_identical(bypos$coefficients, byname$coefficients)
+  V <- mc_vcov_graph(f, "sandwich", cluster = cl, small_sample = TRUE)
+  expect_identical(bypos$coefficients$Std.Error,
+                   unname(sqrt(diag(as.matrix(V)))))
+  ts <- expect_no_warning(summary(f, "two_stage", cl, FALSE, "shortcut"))
+  same_first(ts)
+  expect_identical(ts$two_stage_method, "shortcut")
+  out <- capture.output(print(bypos))
+  expect_true(any(grepl("Regression:", out, fixed = TRUE)))
+  # the dots reach the mcglm method, here its choice of blocks
+  cor_only <- expect_no_warning(summary(f, print = "Correlation"))
+  expect_false(any(grepl("Regression:", cor_only$first_stage_text,
+                         fixed = TRUE)))
+  expect_identical(cor_only$coefficients, ref$coefficients)
+})
+
 test_that("anova() is inherited", {
   f <- inherit_fit()
   m <- f
